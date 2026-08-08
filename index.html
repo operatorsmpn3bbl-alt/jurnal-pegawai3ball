@@ -1,10 +1,1991 @@
 <!DOCTYPE html>
-<html>
+<html lang="id" class="h-screen">
 <head>
-  <title>Website Portofolio Saya</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jurnal Digital - SMP NEGERI 3 BABELAN</title>
+    <!-- Library CSS & Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Library Fungsional (Chart, Excel, PDF, FileSaver) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border: 1px solid rgba(229, 231, 235, 0.8); }
+        input[type="time"]::-webkit-inner-spin-button, input[type="time"]::-webkit-calendar-picker-indicator { display: block; opacity: 1; cursor: pointer; }
+        .marquee-container { overflow: hidden; white-space: nowrap; width: 100%; }
+        .marquee-text { display: inline-block; animation: marquee 25s linear infinite; }
+        .marquee-container:hover .marquee-text { animation-play-state: paused; }
+        @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .html2pdf__page-break { page-break-before: always; }
+        
+        /* CSS KHUSUS UNTUK PRINT DIALOG BROWSER (A4, Bersih, Teks Hitam) */
+        @media print {
+            @page { size: A4 portrait; margin: 0mm !important; } 
+            body, html { height: auto !important; overflow: visible !important; background-color: white !important; margin: 0 !important; padding: 0 !important; }
+            #app, #toastContainer, #imageLightboxModal, .fixed { display: none !important; }
+            
+            #printableArea { 
+                display: block !important; 
+                position: relative !important; 
+                width: 100% !important; 
+                left: 0 !important; 
+                top: 0 !important; 
+                padding: 15mm 15mm 15mm 15mm !important; 
+                box-sizing: border-box !important; 
+                background: white !important; 
+            }
+            
+            /* Memaksa semua tulisan berwarna hitam murni */
+            #printableArea, #printableArea *, #printableArea p, #printableArea h1, #printableArea h2, #printableArea h3, #printableArea span, #printableArea td, #printableArea th { 
+                color: #000000 !important; 
+                text-decoration-color: #000000 !important;
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+            
+            table { border-collapse: collapse; width: 100% !important; page-break-inside: auto; margin-bottom: 20px; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            
+            /* Hanya beri garis border ke Tabel Jurnal Utama */
+            table.table-jurnal th, table.table-jurnal td { border: 1px solid black !important; padding: 12px !important; }
+            table.table-jurnal th { background-color: #f3f4f6 !important; font-weight: bold !important; font-size: 13px !important; text-transform: uppercase; }
+            table.table-jurnal td { font-size: 12px !important; }
+            
+            /* Tabel Tanda Tangan & Kop dilarang keras punya border */
+            table.table-ttd, table.table-ttd tr, table.table-ttd td { border: none !important; padding: 0 !important; }
+            table.table-kop, table.table-kop tr, table.table-kop td { border: none !important; }
+            
+            .print-page { page-break-after: always; margin-bottom: 20px; }
+            .print-page:last-child { page-break-after: auto; margin-bottom: 0; }
+        }
+    </style>
 </head>
-<body>
-  <h1>Halo, Selamat Datang!</h1>
-  <p>Ini adalah website pertama saya menggunakan domain gratis dari GitHub.</p>
+<body class="h-screen bg-gray-50 text-gray-800 font-sans antialiased overflow-hidden">
+
+    <div id="toastContainer" class="fixed top-5 right-5 z-[60] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- MODAL FOTO FULLSCREEN (LIGHTBOX) -->
+    <div id="imageLightboxModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300" onclick="window.closeImageLightbox()">
+        <button class="absolute top-4 right-4 text-white text-3xl hover:text-gray-300"><i class="fa-solid fa-xmark"></i></button>
+        <img id="lightboxImage" src="" class="max-w-[90%] max-h-[90vh] object-contain rounded-lg shadow-2xl scale-95 transition-transform duration-300">
+    </div>
+
+    <!-- APLIKASI UTAMA -->
+    <div id="app" class="h-screen flex flex-col">
+        <!-- LOGIN VIEW -->
+        <div id="loginView" class="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-emerald-900 via-gray-900 to-gray-950 px-4">
+            <div class="relative w-full max-w-md p-8 glass-card rounded-3xl shadow-2xl">
+                <div class="text-center mb-8">
+                    <div id="loginLogoContainer" class="w-20 h-20 bg-emerald-600 rounded-2xl mx-auto flex items-center justify-center text-white text-3xl shadow-lg mb-4 overflow-hidden"><i class="fa-solid fa-school" id="loginLogoIcon"></i></div>
+                    <h1 class="text-2xl font-bold text-gray-900" id="loginTitleSekolah">SMP NEGERI 3 BABELAN</h1>
+                    <p class="text-xs font-semibold text-emerald-600 tracking-wider uppercase mt-1">Sistem Jurnal Harian Pegawai</p>
+                </div>
+                <form id="loginForm" onsubmit="return handleLogin(event)" class="space-y-5">
+                    <div class="relative"><span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400"><i class="fa-solid fa-user"></i></span><input type="text" id="username" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm" placeholder="Username / NIP"></div>
+                    <div class="relative"><span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400"><i class="fa-solid fa-lock"></i></span><input type="password" id="password" required class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-300 rounded-xl text-sm" placeholder="Password"></div>
+                    <button type="submit" id="btnLogin" class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-semibold rounded-xl shadow-lg transition-all">Masuk Sistem <i class="fa-solid fa-arrow-right ml-2"></i></button>
+                    <div class="text-center pt-2"><span class="text-[11px] font-medium text-gray-400 tracking-wider">created by : tu3ball</span></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- DASHBOARD MAIN VIEW -->
+        <div id="dashboardView" class="h-screen flex overflow-hidden hidden relative">
+            <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-gray-900/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
+            <!-- SIDEBAR -->
+            <aside id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-40 w-64 bg-white border-r border-gray-200 flex flex-col h-full shadow-2xl md:shadow-none">
+                <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div id="sidebarLogoContainer" class="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md overflow-hidden flex-shrink-0"><i class="fa-solid fa-school" id="sidebarLogoIcon"></i></div>
+                        <div class="overflow-hidden"><h2 class="font-bold text-sm leading-tight text-gray-900 truncate" id="sidebarTitleSekolah">SMPN 3 BABELAN</h2><span class="text-[10px] text-emerald-600 font-semibold uppercase" id="sidebarRoleLabel">Jurnal Pegawai</span></div>
+                    </div>
+                    <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto" id="sidebarNav">
+                    <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-emerald-50 text-emerald-600 transition-colors"><i class="fa-solid fa-chart-pie w-5"></i> Dashboard</a>
+                    <a href="#" onclick="switchTab('jurnal')" id="nav-jurnal" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"><i class="fa-solid fa-book-bookmark w-5"></i> Data Jurnal</a>
+                    <a href="#" onclick="switchTab('pegawai')" id="nav-pegawai" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"><i class="fa-solid fa-users w-5"></i> Data Pegawai</a>
+                    <a href="#" onclick="switchTab('pengaturan')" id="nav-pengaturan" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"><i class="fa-solid fa-gear w-5"></i> Pengaturan</a>
+                </nav>
+            </aside>
+
+            <!-- MAIN CONTENT AREA -->
+            <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+                <!-- HEADER -->
+                <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 z-20 flex-shrink-0">
+                    <div class="flex items-center gap-3">
+                        <button onclick="toggleSidebar()" class="md:hidden text-gray-500 hover:text-emerald-600 focus:outline-none transition-colors"><i class="fa-solid fa-bars text-xl"></i></button>
+                        <h1 id="greetingTitle" class="text-sm sm:text-base font-bold text-gray-800">Selamat Datang 👋</h1>
+                    </div>
+                    <div class="flex items-center gap-2 sm:gap-4">
+                        <div id="realtimeClock" class="text-[10px] sm:text-xs font-medium text-gray-500 bg-gray-100 px-2 sm:px-3 py-1.5 rounded-lg border border-gray-200 hidden sm:block">--:--:--</div>
+                        <div class="relative" id="profileArea">
+                            <div class="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-gray-200 cursor-pointer select-none" onclick="toggleDropdown()">
+                                <div class="w-8 h-8 sm:w-9 sm:h-9 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm" id="headerAvatar">A</div>
+                                <div class="hidden sm:block text-left"><div class="text-xs font-bold text-gray-800" id="headerUsername">Administrator</div><div class="text-[10px] text-emerald-600 font-semibold" id="headerTitleSekolah">SMPN 3 Babelan</div></div>
+                                <i class="fa-solid fa-chevron-down text-gray-400 text-xs ml-1 transition-transform" id="dropdownIcon"></i>
+                            </div>
+                            <div id="profileDropdown" class="hidden absolute right-0 top-full mt-3 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 z-50 transform origin-top-right transition-all">
+                                <div class="px-4 py-3 border-b border-gray-50 sm:hidden">
+                                    <div class="text-xs font-bold text-gray-800" id="mobileHeaderUsername">Administrator</div>
+                                    <div class="text-[10px] text-emerald-600 font-semibold truncate" id="mobileHeaderTitleSekolah">SMPN 3 Babelan</div>
+                                </div>
+                                <button onclick="handleLogout()" class="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 font-semibold transition-colors flex items-center gap-2"><i class="fa-solid fa-right-from-bracket"></i> Keluar Aplikasi</button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <main class="flex-1 overflow-y-auto p-4 sm:p-6 bg-gray-50 pb-16">
+                    <!-- TAB 1: DASHBOARD -->
+                    <div id="view-dashboard" class="space-y-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="p-5 bg-white rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden group">
+                                <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-50 rounded-full blur-2xl -mr-8 -mt-8 group-hover:scale-110 transition-transform"></div>
+                                <div class="flex items-center justify-between mb-3 relative z-10"><div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-book"></i></div><span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100">Jurnal</span></div>
+                                <h3 class="text-3xl font-bold text-gray-900 relative z-10" id="statTotalJurnal">0</h3><p class="text-xs text-gray-500 font-medium mt-1 relative z-10">Total Jurnal Tercatat</p>
+                            </div>
+                            <div class="p-5 bg-white rounded-2xl border border-gray-200 shadow-sm relative overflow-hidden group" id="cardStatPegawai">
+                                <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-full blur-2xl -mr-8 -mt-8 group-hover:scale-110 transition-transform"></div>
+                                <div class="flex items-center justify-between mb-3 relative z-10"><div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center"><i class="fa-solid fa-users"></i></div><span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100">Pegawai</span></div>
+                                <h3 class="text-3xl font-bold text-gray-900 relative z-10" id="statTotalPegawai">0</h3><p class="text-xs text-gray-500 font-medium mt-1 relative z-10">Total Pegawai Terdaftar</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2 p-5 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col">
+                                <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-chart-line text-emerald-600"></i> Statistik Aktivitas Jurnal</h3>
+                                <div class="flex-1 min-h-[250px] relative w-full"><canvas id="activityChart"></canvas></div>
+                            </div>
+                            <div class="p-5 bg-white rounded-2xl border border-gray-200 shadow-sm flex flex-col justify-between">
+                                <h3 class="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fa-regular fa-images text-emerald-600"></i> Galeri Jurnal Terbaru</h3>
+                                <div id="recentImagesContainer" class="flex-1 min-h-[200px] flex items-center justify-center bg-gray-50 border border-dashed border-gray-200 rounded-xl p-3"></div>
+                                <button onclick="switchTab('jurnal')" class="w-full mt-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition-all shadow-sm">Lihat Semua Data Jurnal</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: DATA JURNAL -->
+                    <div id="view-jurnal" class="space-y-6 hidden">
+                        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                            <div class="w-full sm:w-1/2">
+                                <h2 class="text-lg font-bold text-gray-900">Manajemen Jurnal</h2>
+                                <p class="text-xs text-gray-500 mb-3">Centang baris folder jurnal untuk opsi massal.</p>
+                                <div class="relative w-full max-w-sm">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i class="fa-solid fa-search"></i></span>
+                                    <input type="text" id="searchJurnal" oninput="renderJurnalTable()" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all" placeholder="Cari nama, kegiatan, tanggal...">
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                <button id="btnDeleteSelected" onclick="deleteSelectedJurnals()" class="hidden px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold shadow-md transition-all items-center gap-2"><i class="fa-solid fa-trash"></i> Hapus Terpilih (<span id="countSelectedDelete">0</span>)</button>
+                                <button id="btnDownloadGabungan" onclick="printSelectedPDF()" class="hidden px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md transition-all items-center gap-2"><i class="fa-solid fa-print"></i> Cetak Gabungan (<span id="countSelected">0</span>)</button>
+                                <button onclick="openSelectJurnalTypeModal()" class="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-plus"></i> Tambah Jurnal</button>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                            <!-- Overflow x-auto untuk fitur roll bawah di HP -->
+                            <div class="overflow-x-auto w-full">
+                                <table class="w-full text-left border-collapse min-w-max">
+                                    <thead>
+                                        <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase select-none">
+                                            <th class="p-4 w-12 text-center whitespace-nowrap"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 cursor-pointer"></th>
+                                            <th class="p-4 cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap" onclick="sortJurnal('tanggal')">Tanggal <i class="fa-solid fa-sort text-gray-300 ml-1" id="sortIcon-tanggal"></i></th>
+                                            <th class="p-4 cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap" onclick="sortJurnal('jenisJurnal')">Jenis <i class="fa-solid fa-sort text-gray-300 ml-1" id="sortIcon-jenisJurnal"></i></th>
+                                            <th class="p-4 whitespace-nowrap">Waktu Kegiatan</th>
+                                            <th class="p-4 cursor-pointer hover:bg-gray-100 transition-colors whitespace-nowrap" onclick="sortJurnal('pegawai')">Nama Pegawai <i class="fa-solid fa-sort text-gray-300 ml-1" id="sortIcon-pegawai"></i></th>
+                                            <th class="p-4 min-w-[250px] text-left whitespace-nowrap">Rincian Keterangan</th>
+                                            <th class="p-4 text-center whitespace-nowrap">Foto</th>
+                                            <th class="p-4 text-center whitespace-nowrap">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="jurnalTableBody" class="divide-y divide-gray-200 text-sm"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: DATA PEGAWAI -->
+                    <div id="view-pegawai" class="space-y-6 hidden">
+                        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                            <div class="w-full sm:w-1/2">
+                                <h2 class="text-lg font-bold text-gray-900">Data Pegawai</h2>
+                                <p class="text-xs text-gray-500 mb-3">Kelola direktori pegawai dan kredensial akun.</p>
+                                <div class="relative w-full max-w-sm">
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i class="fa-solid fa-search"></i></span>
+                                    <input type="text" id="searchPegawai" oninput="renderPegawaiTable()" class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 transition-all" placeholder="Cari NIP atau Nama...">
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                <button onclick="openPegawaiModal()" class="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2"><i class="fa-solid fa-user-plus"></i> Tambah</button>
+                                <button onclick="downloadExcelTemplate()" class="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2"><i class="fa-solid fa-download"></i> Template</button>
+                                <label class="flex-1 sm:flex-none justify-center px-4 py-2.5 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-file-excel"></i> Upload<input type="file" id="excelUploadInput" accept=".xlsx, .xls" class="hidden" onchange="handleExcelUpload(event)"></label>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                            <div class="overflow-x-auto w-full">
+                                <table class="w-full text-left border-collapse min-w-max">
+                                    <thead>
+                                        <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase">
+                                            <th class="p-4 whitespace-nowrap">NIP</th><th class="p-4 whitespace-nowrap">Nama</th><th class="p-4 whitespace-nowrap">Jabatan</th><th class="p-4 whitespace-nowrap">Jenis</th><th class="p-4 whitespace-nowrap">Email</th><th class="p-4 whitespace-nowrap">Username / Password</th><th class="p-4 text-center whitespace-nowrap">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pegawaiTableBody" class="divide-y divide-gray-200 text-sm"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: PENGATURAN -->
+                    <div id="view-pengaturan" class="space-y-6 hidden">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- PANEL SETTINGS ADMIN -->
+                            <div id="adminSettingsPanel" class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hidden">
+                                <div class="flex items-center gap-3 mb-6"><div class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-building"></i></div><h2 class="text-lg font-bold text-gray-900">Identitas & Kop Surat</h2></div>
+                                <form onsubmit="return handleSaveSettings(event)" class="space-y-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div><label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Kop Baris 1</label><input type="text" id="setKop1" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm" placeholder="PEMERINTAH KABUPATEN BEKASI"></div>
+                                        <div><label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Kop Baris 2</label><input type="text" id="setKop2" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm" placeholder="DINAS PENDIDIKAN"></div>
+                                    </div>
+                                    <div><label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Nama Sekolah / Instansi</label><input type="text" id="setSekolah" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm font-bold" required></div>
+                                    <div><label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Alamat Lengkap</label><textarea id="setAlamat" rows="2" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm"></textarea></div>
+                                    <hr class="border-gray-200">
+                                    <div><label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Nama Kepala Sekolah</label><input type="text" id="setKepsek" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm" required></div>
+                                    <div><label class="block text-xs font-semibold uppercase text-gray-600 mb-2">NIP Kepala Sekolah</label><input type="text" id="setNip" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm"></div>
+                                    <div><label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Teks Berjalan (Footer)</label><input type="text" id="setRunningText" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl text-sm" placeholder="Contoh: Selamat datang di aplikasi..."></div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Upload Logo (.png/.jpg)</label>
+                                            <input type="file" id="setLogoFile" accept="image/png, image/jpeg" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:font-semibold file:bg-emerald-50 file:text-emerald-700 cursor-pointer border border-gray-300 rounded-lg p-1 bg-gray-50">
+                                            <div id="previewLogoSekolah" class="mt-2 hidden border border-gray-200 rounded-lg p-2 bg-gray-50 flex items-center justify-center h-20"></div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Upload TTD Pimpinan</label>
+                                            <input type="file" id="setTtdKepsek" accept="image/png, image/jpeg" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:font-semibold file:bg-blue-50 file:text-blue-700 cursor-pointer border border-gray-300 rounded-lg p-1 bg-gray-50">
+                                            <div id="previewTtdPimpinan" class="mt-2 hidden border border-gray-200 rounded-lg p-2 bg-gray-50 flex items-center justify-center h-20"></div>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-save"></i> Simpan Pengaturan Sekolah</button>
+                                </form>
+                            </div>
+
+                            <!-- PANEL SETTINGS PEGAWAI -->
+                            <div id="pegawaiSettingsPanel" class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hidden">
+                                <div class="flex items-center gap-3 mb-6"><div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-signature"></i></div><h2 class="text-lg font-bold text-gray-900">Profil & Tanda Tangan</h2></div>
+                                <form onsubmit="return handlePegawaiSettingsSave(event)" class="space-y-4">
+                                    <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 text-xs text-blue-800 mb-4">
+                                        <i class="fa-solid fa-circle-info mr-1"></i> Upload foto Tanda Tangan (TTD) Anda untuk dicetak otomatis pada laporan PDF. Format JPG/PNG.
+                                    </div>
+                                    <div><label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Upload TTD Saya</label><input type="file" id="setTtdPegawai" accept="image/png, image/jpeg" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-blue-100 file:text-blue-700 cursor-pointer border border-gray-300 rounded-xl p-1 bg-gray-50"></div>
+                                    <div id="previewTtdPegawai" class="hidden mb-4 border border-gray-200 rounded-lg p-2 bg-gray-50 flex items-center justify-center h-24"></div>
+                                    <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-save"></i> Simpan TTD</button>
+                                </form>
+                            </div>
+
+                            <!-- PANEL KEAMANAN AKUN -->
+                            <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm h-fit" id="keamananPanel">
+                                <div class="flex items-center gap-3 mb-6"><div class="w-8 h-8 bg-red-100 text-red-600 rounded-lg flex items-center justify-center"><i class="fa-solid fa-shield-halved"></i></div><h2 class="text-lg font-bold text-gray-900">Keamanan Akun</h2></div>
+                                <form onsubmit="return handlePasswordChange(event)" class="space-y-4">
+                                    <div><label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Password Lama</label><input type="password" id="oldPass" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm"></div>
+                                    <div><label class="block text-xs font-semibold uppercase text-gray-600 mb-2">Password Baru</label><input type="password" id="newPass" required class="w-full px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-sm"></div>
+                                    <button type="submit" class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl text-sm font-bold shadow-md transition-all">Ganti Password</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+
+                <!-- FOOTER RUNNING TEXT -->
+                <div class="absolute bottom-0 w-full bg-emerald-800 text-white py-2 flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
+                    <div class="marquee-container text-xs font-semibold tracking-wide">
+                        <div class="marquee-text" id="displayRunningText">Selamat Datang di Sistem Jurnal Harian Pegawai SMP Negeri 3 Babelan</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL PILIH JENIS JURNAL -->
+        <div id="selectJurnalTypeModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 backdrop-blur-sm hidden p-4">
+            <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-900">Pilih Jenis Jurnal</h3>
+                    <button type="button" onclick="closeSelectJurnalTypeModal()"><i class="fa-solid fa-xmark text-lg text-gray-500 hover:text-gray-800 transition-colors"></i></button>
+                </div>
+                <div class="p-6 space-y-4">
+                    <button type="button" onclick="selectJurnalType('Harian')" class="w-full p-4 border-2 border-emerald-100 hover:border-emerald-500 hover:bg-emerald-50 rounded-2xl flex items-center gap-4 transition-all text-left group shadow-sm">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white rounded-xl flex items-center justify-center text-xl transition-colors"><i class="fa-solid fa-calendar-day"></i></div>
+                        <div><h4 class="font-bold text-gray-900 text-sm">Jurnal Harian</h4><p class="text-[11px] text-gray-500 mt-0.5">Catatan aktivitas pekerjaan harian</p></div>
+                    </button>
+                    <button type="button" onclick="selectJurnalType('Bulanan')" class="w-full p-4 border-2 border-blue-100 hover:border-blue-500 hover:bg-blue-50 rounded-2xl flex items-center gap-4 transition-all text-left group shadow-sm">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white rounded-xl flex items-center justify-center text-xl transition-colors"><i class="fa-solid fa-calendar-days"></i></div>
+                        <div><h4 class="font-bold text-gray-900 text-sm">Jurnal Bulanan</h4><p class="text-[11px] text-gray-500 mt-0.5">Rekapitulasi target dan laporan bulanan</p></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL JURNAL UTAMA -->
+        <div id="jurnalModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 backdrop-blur-sm hidden p-4">
+            <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-900" id="jurnalModalTitle">Form Jurnal Kegiatan</h3>
+                    <button type="button" onclick="closeJurnalModal()"><i class="fa-solid fa-xmark text-lg text-gray-500 hover:text-gray-800 transition-colors"></i></button>
+                </div>
+                <form id="jurnalForm" onsubmit="return handleJurnalSubmit(event)" class="p-6 space-y-4 overflow-y-auto flex-1">
+                    <div id="jurnalEntriesContainer" class="space-y-4"></div>
+                    <button type="button" onclick="addJurnalEntry()" class="w-full mt-2 py-3 border-2 border-dashed border-emerald-400 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Tambah Kegiatan Lainnya (Di Tanggal Ini)
+                    </button>
+                    <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
+                        <button type="button" onclick="closeJurnalModal()" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold transition-all">Batal</button>
+                        <button type="submit" data-action="close" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-check"></i> Simpan & Tutup</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL EDIT JURNAL -->
+        <div id="editJurnalModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 backdrop-blur-sm hidden p-4">
+            <div class="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-900">Edit Aktivitas Jurnal</h3>
+                    <button type="button" onclick="closeEditJurnalModal()"><i class="fa-solid fa-xmark text-lg text-gray-500 hover:text-gray-800 transition-colors"></i></button>
+                </div>
+                <form id="editJurnalForm" onsubmit="return handleEditJurnalSubmit(event)" class="p-6 space-y-4 overflow-y-auto flex-1">
+                    <input type="hidden" id="edit-id">
+                    <div class="bg-blue-50 border border-blue-100 p-5 rounded-2xl mb-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Jenis Jurnal</label><select id="edit-jenis" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-xl text-sm text-gray-700"><option value="Harian">Harian</option><option value="Bulanan">Bulanan</option></select></div>
+                            <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Tanggal Kegiatan</label><input type="date" id="edit-tanggal" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-xl text-sm"></div>
+                            <div id="editNamaContainer" class="sm:col-span-2"></div>
+                        </div>
+                    </div>
+                    <div id="editJurnalActivitiesContainer" class="space-y-4"></div>
+                    <button type="button" onclick="window.addEditJurnalEntry()" class="w-full mt-2 py-3 border-2 border-dashed border-blue-400 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Tambah Kegiatan Lainnya (Di Tanggal Ini)
+                    </button>
+                    <div class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-100 mt-4">
+                        <button type="button" onclick="closeEditJurnalModal()" class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold transition-all">Batal</button>
+                        <button type="submit" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-save"></i> Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL TAMBAH PEGAWAI -->
+        <div id="pegawaiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 backdrop-blur-sm hidden p-4">
+            <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center"><h3 class="font-bold text-gray-900">Tambah Pegawai Baru</h3><button type="button" onclick="closePegawaiModal()"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+                <form id="pegawaiForm" onsubmit="return handlePegawaiSubmit(event)" class="p-6 space-y-4 overflow-y-auto flex-1">
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">NIP (Username Login)</label><input type="text" id="pegawaiNip" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-emerald-500 rounded-xl text-sm font-mono" placeholder="Contoh: 19850101"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Nama Lengkap</label><input type="text" id="pegawaiNama" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-emerald-500 rounded-xl text-sm" placeholder="Nama Lengkap & Gelar"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Jabatan</label><input type="text" id="pegawaiJabatan" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-emerald-500 rounded-xl text-sm" placeholder="Contoh: Guru / Tendik"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Jenis Pegawai</label><select id="pegawaiJenis" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-emerald-500 rounded-xl text-sm text-gray-700"><option value="PNS">PNS</option><option value="PPPK">PPPK</option><option value="Honor Sekolah">Honor Sekolah</option></select></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Email Aktif</label><input type="email" id="pegawaiEmail" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-emerald-500 rounded-xl text-sm" placeholder="email@smpn3babelan.sch.id"></div>
+                    <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-emerald-800"><i class="fa-solid fa-circle-info mr-1"></i> Akun login akan dibuat otomatis menggunakan <b>NIP</b> sebagai Username dan password default: <b>Pegawai123</b>.</div>
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button type="button" onclick="closePegawaiModal()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-all">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-md transition-all">Simpan Pegawai</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL EDIT PEGAWAI -->
+        <div id="editPegawaiModal" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/60 backdrop-blur-sm hidden p-4">
+            <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-gray-200 overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center"><h3 class="font-bold text-gray-900">Edit Data Pegawai</h3><button type="button" onclick="closeEditPegawaiModal()"><i class="fa-solid fa-xmark text-lg"></i></button></div>
+                <form id="editPegawaiForm" onsubmit="return handleEditPegawaiSubmit(event)" class="p-6 space-y-4 overflow-y-auto flex-1">
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">NIP (Username Login)</label><input type="text" id="editPegawaiNip" required readonly class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-xl text-sm font-mono text-gray-500 cursor-not-allowed"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Nama Lengkap</label><input type="text" id="editPegawaiNama" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-xl text-sm"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Jabatan</label><input type="text" id="editPegawaiJabatan" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-xl text-sm"></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Jenis Pegawai</label><select id="editPegawaiJenis" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-xl text-sm text-gray-700"><option value="PNS">PNS</option><option value="PPPK">PPPK</option><option value="Honor Sekolah">Honor Sekolah</option></select></div>
+                    <div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Email Aktif</label><input type="email" id="editPegawaiEmail" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-xl text-sm"></div>
+                    <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <button type="button" onclick="closeEditPegawaiModal()" class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-semibold transition-all">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold shadow-md transition-all">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AREA CETAK LAPORAN PDF NATIVE -->
+    <div id="printableArea" class="hidden">
+        <!-- Area ini diisi otomatis oleh JavaScript saat print native berjalan -->
+    </div>
+
+    <!-- SCRIPT UTAMA -->
+    <script>
+        window.activateDashboardUI = function(isAdmin, matchedPegawai) {
+            document.getElementById('loginView').classList.add('hidden'); 
+            document.getElementById('dashboardView').classList.remove('hidden'); 
+            
+            if (isAdmin) {
+                document.getElementById('nav-pegawai').style.display = 'flex';
+                document.getElementById('cardStatPegawai').style.display = 'block';
+                document.getElementById('sidebarRoleLabel').innerText = 'Administrator';
+                document.getElementById('adminSettingsPanel').classList.remove('hidden');
+                document.getElementById('pegawaiSettingsPanel').classList.add('hidden');
+            } else {
+                document.getElementById('nav-pegawai').style.display = 'none';
+                document.getElementById('cardStatPegawai').style.display = 'none';
+                document.getElementById('sidebarRoleLabel').innerText = 'Pegawai / Guru';
+                document.getElementById('adminSettingsPanel').classList.add('hidden');
+                document.getElementById('pegawaiSettingsPanel').classList.remove('hidden');
+            }
+
+            document.getElementById('headerUsername').innerText = window.loggedInPegawaiName || '-';
+            document.getElementById('headerAvatar').innerText = (window.loggedInPegawaiName ? window.loggedInPegawaiName.charAt(0).toUpperCase() : 'A');
+
+            var preview = document.getElementById('previewTtdPegawai');
+            if (matchedPegawai && matchedPegawai.ttdBase64 && preview) {
+                preview.innerHTML = '<img src="' + matchedPegawai.ttdBase64 + '" class="max-h-full">';
+                preview.classList.remove('hidden');
+            } else if(preview) {
+                preview.classList.add('hidden');
+            }
+
+            var sb = document.getElementById('sidebar'); 
+            if(!sb.classList.contains('-translate-x-full') && window.innerWidth < 768) { 
+                window.toggleSidebar(); 
+            }
+            
+            if (!isAdmin) {
+                window.switchTab('jurnal'); 
+            } else {
+                window.switchTab('dashboard'); 
+            }
+            
+            window.renderDashboardStats(); 
+            window.renderJurnalTable(); 
+            window.renderCharts(); 
+        };
+
+        // Parser Tanggal untuk Tanda Tangan (mengikuti tanggal Kegiatan)
+        window.parseDateToIndo = function(dateStr) {
+            if (!dateStr) return window.formatTanggalIndo(new Date());
+            var parts = dateStr.split('-');
+            if (parts.length === 3) {
+                var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                var d = parseInt(parts[2], 10);
+                var m = months[parseInt(parts[1], 10) - 1];
+                var y = parts[0];
+                return d + ' ' + m + ' ' + y;
+            }
+            return dateStr;
+        };
+
+        window.generateDocumentHTML = function(item, isLast) {
+            var pData = window.globalPegawaiData.find(function(p) { return p.nama === item.pegawai; }) || {};
+            var nipText = pData.nip || '-';
+            var ttdPegawaiHTML = (pData.ttdBase64) ? '<img src="' + pData.ttdBase64 + '" style="max-height:100px; max-width: 180px; object-fit:contain;">' : '<br><br><br>';
+            var ttdKepsekHTML = window.globalSettings.ttdKepsekBase64 ? '<img src="' + window.globalSettings.ttdKepsekBase64 + '" style="max-height:100px; max-width: 180px; object-fit:contain;">' : '<br><br><br>';
+            
+            // Logo diposisikan di Kiri
+            var logoHTML = window.globalSettings.logoBase64 ? '<img src="' + window.globalSettings.logoBase64 + '" style="width:100px;height:100px;object-fit:contain;position:absolute;left:0;top:0;">' : '<i class="fa-solid fa-school" style="font-size: 60px; color: black; position: absolute; left: 10px; top: 10px;"></i>';
+
+            var rows = '';
+            var counter = 1;
+            if(item.activities && item.activities.length > 0) {
+                for(var a=0; a<item.activities.length; a++) {
+                    var act = item.activities[a];
+                    var fotoStr = act.fotoBase64 ? '<img src="' + act.fotoBase64 + '" style="width:80px;height:80px;object-fit:cover;border-radius:4px;margin:auto;display:block;">' : '-';
+                    if (a === 0) {
+                        rows += '<tr>' +
+                            '<td style="border:1px solid #000; padding:12px; text-align:center; color:black;" rowspan="' + item.activities.length + '">' + (counter++) + '</td>' +
+                            '<td style="border:1px solid #000; padding:12px; text-align:center; color:black;" rowspan="' + item.activities.length + '">' + window.formatTanggal(item.tanggal || '') + '<br><b style="font-size: 10px;">' + (item.jenisJurnal || '') + '</b></td>' +
+                            '<td style="border:1px solid #000; padding:12px; text-align:center; font-family:monospace; color:black;">' + (act.jamMulai || '') + ' - ' + (act.jamSelesai || '') + '</td>' +
+                            '<td style="border:1px solid #000; padding:12px; text-align:center; color:black;" rowspan="' + item.activities.length + '"><b>' + (item.pegawai || '-') + '</b><br><span style="font-size:10px;">NIP: ' + nipText + '</span></td>' +
+                            '<td style="border:1px solid #000; padding:12px; text-align:left; color:black;">' + (act.keterangan || '') + '</td>' +
+                            '<td style="border:1px solid #000; padding:12px; text-align:center; color:black;">' + fotoStr + '</td>' +
+                        '</tr>';
+                    } else {
+                        rows += '<tr>' +
+                            '<td style="border:1px solid #000; padding:12px; text-align:center; font-family:monospace; color:black;">' + (act.jamMulai || '') + ' - ' + (act.jamSelesai || '') + '</td>' +
+                            '<td style="border:1px solid #000; padding:12px; text-align:left; color:black;">' + (act.keterangan || '') + '</td>' +
+                            '<td style="border:1px solid #000; padding:12px; text-align:center; color:black;">' + fotoStr + '</td>' +
+                        '</tr>';
+                    }
+                }
+            }
+
+            var html = '<div class="print-page" style="font-family: Arial, sans-serif; color: black !important; background: white; width: 100%; box-sizing: border-box; ' + (isLast ? '' : 'page-break-after: always; margin-bottom: 20px;') + '">' +
+                '<div style="display:flex; align-items:center; justify-content:center; border-bottom: 4px double #000; padding-bottom: 15px; margin-bottom: 20px; position: relative; min-height:100px;">' +
+                    logoHTML +
+                    '<div style="text-align: center; width: 100%; padding: 0 110px;">' +
+                        '<h3 style="font-size:16px; font-weight:bold; text-transform:uppercase; margin:0; color:black !important;">' + (window.globalSettings.kop1 || '') + '</h3>' +
+                        '<h3 style="font-size:16px; font-weight:bold; text-transform:uppercase; margin:0; color:black !important;">' + (window.globalSettings.kop2 || '') + '</h3>' +
+                        '<h1 style="font-size:24px; font-weight:900; text-transform:uppercase; margin:5px 0; color:black !important;">' + (window.globalSettings.namaSekolah || '') + '</h1>' +
+                        '<p style="font-size:12px; margin:0; color:black !important;">' + (window.globalSettings.alamat || '') + '</p>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="text-align: center; margin-bottom: 25px;">' +
+                    '<h2 style="font-size:18px; font-weight:bold; text-transform:uppercase; text-decoration:underline; margin:0; color:black !important;">LAPORAN JURNAL PEGAWAI</h2>' +
+                    '<p style="font-size:14px; font-weight:bold; margin-top:5px; color:black !important;">Nama: ' + (item.pegawai || '') + '</p>' +
+                '</div>' +
+                '<table class="table-jurnal" style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 40px; color:black !important;">' +
+                    '<thead>' +
+                        '<tr>' +
+                            '<th style="border:1px solid #000; padding:12px; font-weight:bold; color:black !important;">NO</th>' +
+                            '<th style="border:1px solid #000; padding:12px; font-weight:bold; color:black !important;">TANGGAL</th>' +
+                            '<th style="border:1px solid #000; padding:12px; font-weight:bold; color:black !important;">WAKTU</th>' +
+                            '<th style="border:1px solid #000; padding:12px; font-weight:bold; color:black !important;">PEGAWAI</th>' +
+                            '<th style="border:1px solid #000; padding:12px; font-weight:bold; color:black !important;">KETERANGAN</th>' +
+                            '<th style="border:1px solid #000; padding:12px; font-weight:bold; color:black !important;">FOTO</th>' +
+                        '</tr>' +
+                    '</thead>' +
+                    '<tbody>' + rows + '</tbody>' +
+                '</table>' +
+                '<table class="table-ttd" style="width:100%; border:none !important; font-size:14px; page-break-inside: avoid; color:black !important;">' +
+                    '<tr style="border:none !important;">' +
+                        '<td style="text-align:center; width:33%; vertical-align:bottom; border:none !important; padding:0 !important;">' +
+                            '<p style="margin:0; color:black !important;">Mengetahui,</p><p style="margin:0; font-weight:bold; color:black !important;">Kepala Sekolah</p>' +
+                            '<div style="height:120px; margin: 10px 0; display:flex; justify-content:center; align-items:center;">' + ttdKepsekHTML + '</div>' +
+                            '<p style="margin:0; font-weight:bold; text-decoration:underline; color:black !important;">' + (window.globalSettings.namaKepsek || '') + '</p>' +
+                            '<p style="margin:0; color:black !important;">NIP. ' + (window.globalSettings.nipKepsek || '') + '</p>' +
+                        '</td>' +
+                        '<td style="width:34%; border:none !important; padding:0 !important;"></td>' +
+                        '<td style="text-align:center; width:33%; vertical-align:bottom; border:none !important; padding:0 !important;">' +
+                            '<p style="margin:0; color:black !important;">Bekasi, ' + window.parseDateToIndo(item.tanggal) + '</p><p style="margin:0; font-weight:bold; color:black !important;">Pegawai</p>' +
+                            '<div style="height:120px; margin: 10px 0; display:flex; justify-content:center; align-items:center;">' + ttdPegawaiHTML + '</div>' +
+                            '<p style="margin:0; font-weight:bold; text-decoration:underline; color:black !important;">' + (item.pegawai || '') + '</p>' +
+                            '<p style="margin:0; color:black !important;">NIP. ' + nipText + '</p>' +
+                        '</td>' +
+                    '</tr>' +
+                '</table>' +
+            '</div>';
+            return html;
+        };
+
+        window.isMockMode = (typeof google === 'undefined' || typeof google.script === 'undefined');
+        
+        window.globalSettings = {
+            kop1: 'PEMERINTAH KABUPATEN BEKASI', kop2: 'DINAS PENDIDIKAN',
+            namaSekolah: 'SMP NEGERI 3 BABELAN', alamat: 'Jl. KH. Noer Ali, Babelan, Kabupaten Bekasi, Jawa Barat',
+            namaKepsek: 'Dra. Hj. ULFAH, M.M', nipKepsek: '196911051995122002', logoBase64: '',
+            ttdKepsekBase64: '', runningText: 'Selamat Datang di Sistem Jurnal Harian Pegawai SMP Negeri 3 Babelan',
+            lastUpdated: 0
+        };
+        
+        window.currentUser = '';
+        window.currentRole = 'admin'; 
+        window.loggedInPegawaiName = '';
+        window.currentJurnalType = 'Harian'; 
+        window.currentSortCol = '';
+        window.currentSortAsc = true;
+
+        window.globalPegawaiData = [];
+        window.globalJurnalData = [];
+        window.selectedJurnalIds = [];
+        window.activityChartInstance = null;
+
+        window.openImageLightbox = function(src) {
+            var modal = document.getElementById('imageLightboxModal');
+            var img = document.getElementById('lightboxImage');
+            img.src = src;
+            modal.classList.remove('hidden');
+            setTimeout(function() {
+                modal.classList.remove('opacity-0');
+                img.classList.remove('scale-95');
+                img.classList.add('scale-100');
+            }, 10);
+        };
+
+        window.closeImageLightbox = function() {
+            var modal = document.getElementById('imageLightboxModal');
+            var img = document.getElementById('lightboxImage');
+            modal.classList.add('opacity-0');
+            img.classList.remove('scale-100');
+            img.classList.add('scale-95');
+            setTimeout(function() {
+                modal.classList.add('hidden');
+                img.src = '';
+            }, 300);
+        };
+
+        window.loadSettingsToUI = function() {
+            try {
+                var setKop1 = document.getElementById('setKop1'); if(setKop1) setKop1.value = window.globalSettings.kop1 || '';
+                var setKop2 = document.getElementById('setKop2'); if(setKop2) setKop2.value = window.globalSettings.kop2 || '';
+                var setSekolah = document.getElementById('setSekolah'); if(setSekolah) setSekolah.value = window.globalSettings.namaSekolah || '';
+                var setAlamat = document.getElementById('setAlamat'); if(setAlamat) setAlamat.value = window.globalSettings.alamat || '';
+                var setKepsek = document.getElementById('setKepsek'); if(setKepsek) setKepsek.value = window.globalSettings.namaKepsek || '';
+                var setNip = document.getElementById('setNip'); if(setNip) setNip.value = window.globalSettings.nipKepsek || '';
+                var setRunningText = document.getElementById('setRunningText'); if(setRunningText) setRunningText.value = window.globalSettings.runningText || '';
+                
+                var titleIds = ['loginTitleSekolah', 'sidebarTitleSekolah', 'headerTitleSekolah', 'mobileHeaderTitleSekolah'];
+                for(var i=0; i<titleIds.length; i++) {
+                    var el = document.getElementById(titleIds[i]);
+                    if(el) el.innerText = window.globalSettings.namaSekolah || 'Sistem Jurnal';
+                }
+                
+                var displayRunningText = document.getElementById('displayRunningText'); if(displayRunningText) displayRunningText.innerText = window.globalSettings.runningText || 'Selamat Datang';
+
+                var hasLogo = window.globalSettings.logoBase64 && window.globalSettings.logoBase64.indexOf('data:image') === 0;
+                
+                var previewLogo = document.getElementById('previewLogoSekolah');
+                if (previewLogo) {
+                    if (window.globalSettings.logoBase64) {
+                        previewLogo.innerHTML = '<img src="' + window.globalSettings.logoBase64 + '" class="max-h-full">';
+                        previewLogo.classList.remove('hidden');
+                    } else { previewLogo.classList.add('hidden'); }
+                }
+                
+                var previewTtd = document.getElementById('previewTtdPimpinan');
+                if (previewTtd) {
+                    if (window.globalSettings.ttdKepsekBase64) {
+                        previewTtd.innerHTML = '<img src="' + window.globalSettings.ttdKepsekBase64 + '" class="max-h-full">';
+                        previewTtd.classList.remove('hidden');
+                    } else { previewTtd.classList.add('hidden'); }
+                }
+
+                var logoContainers = ['loginLogoContainer', 'sidebarLogoContainer'];
+                for(var j=0; j<logoContainers.length; j++) {
+                    var box = document.getElementById(logoContainers[j]);
+                    if(box) {
+                        if (hasLogo) {
+                            box.innerHTML = '<img src="' + window.globalSettings.logoBase64 + '" class="w-full h-full object-cover bg-white p-0.5">'; 
+                            box.classList.remove('bg-emerald-600', 'bg-emerald-700'); box.classList.add('bg-white'); 
+                        } else {
+                            box.innerHTML = '<i class="fa-solid fa-school"></i>'; box.classList.add('bg-emerald-600'); 
+                        }
+                    }
+                }
+            } catch(e) { console.log(e); }
+        };
+
+        window.formatTanggal = function(tglString) {
+            if (!tglString) return '';
+            var parts = tglString.split('-');
+            if (parts.length === 3) { return parts[2] + '-' + parts[1] + '-' + parts[0]; }
+            return tglString;
+        };
+
+        window.formatTanggalIndo = function(date) {
+            var months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+            return date.getDate() + ' ' + months[date.getMonth()] + ' ' + date.getFullYear();
+        };
+
+        window.initClock = function() { 
+            setInterval(function() { 
+                var el = document.getElementById('realtimeClock');
+                if(el) el.innerText = new Date().toLocaleTimeString('id-ID'); 
+            }, 1000); 
+        };
+
+        window.showToast = function(msg, type) { 
+            var cont = document.getElementById('toastContainer'); 
+            if(!cont) return;
+            var t = document.createElement('div'); 
+            var bgColor = type === 'success' ? 'bg-emerald-600' : 'bg-red-600';
+            var iconType = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
+            t.className = 'pointer-events-auto px-4 py-3 rounded-xl shadow-lg text-white text-xs font-semibold flex items-center gap-3 transition-all ' + bgColor; 
+            t.innerHTML = '<i class="fa-solid ' + iconType + '"></i> <span>' + msg + '</span>'; 
+            cont.appendChild(t); 
+            setTimeout(function(){ t.remove(); }, 3000); 
+        };
+
+        window.toggleSidebar = function() {
+            var sidebar = document.getElementById('sidebar');
+            var overlay = document.getElementById('sidebarOverlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        };
+
+        window.toggleDropdown = function() {
+            var dropdown = document.getElementById('profileDropdown');
+            var icon = document.getElementById('dropdownIcon');
+            dropdown.classList.toggle('hidden');
+            if(!dropdown.classList.contains('hidden')) { 
+                icon.classList.add('rotate-180'); 
+            } else { 
+                icon.classList.remove('rotate-180'); 
+            }
+        };
+
+        window.switchTab = function(tabId) { 
+            var tabs = ['dashboard','jurnal','pegawai','pengaturan'];
+            for(var i=0; i<tabs.length; i++) {
+                var el = document.getElementById('view-' + tabs[i]); 
+                var nav = document.getElementById('nav-' + tabs[i]);
+                if(el) el.classList.add('hidden'); 
+                if(nav) nav.classList.remove('bg-emerald-50','text-emerald-600'); 
+            }
+            
+            var targetEl = document.getElementById('view-' + tabId); 
+            var targetNav = document.getElementById('nav-' + tabId);
+            if(targetEl) targetEl.classList.remove('hidden'); 
+            if(targetNav) targetNav.classList.add('bg-emerald-50','text-emerald-600'); 
+
+            if (tabId === 'dashboard') { setTimeout(function() { window.renderCharts(); }, 100); }
+            if (window.innerWidth < 768) {
+                var sidebar = document.getElementById('sidebar'); 
+                var overlay = document.getElementById('sidebarOverlay');
+                if(!sidebar.classList.contains('-translate-x-full')) { 
+                    sidebar.classList.add('-translate-x-full'); 
+                    overlay.classList.add('hidden'); 
+                }
+            }
+        };
+
+        function checkSession() {
+            var session = localStorage.getItem('smpn3_session');
+            if (session) {
+                try {
+                    var s = JSON.parse(session);
+                    
+                    var matchedPegawai = null;
+                    var isAdmin = (s.user === 'admin' || s.role === 'admin');
+                    
+                    if (window.globalPegawaiData && window.globalPegawaiData.length > 0) {
+                        for(var i=0; i<window.globalPegawaiData.length; i++) {
+                            if(window.globalPegawaiData[i].nip === s.user) { 
+                                matchedPegawai = window.globalPegawaiData[i]; 
+                                break; 
+                            }
+                        }
+                    }
+
+                    if (matchedPegawai || isAdmin) {
+                        window.currentUser = s.user;
+                        window.currentRole = s.role;
+                        window.loggedInPegawaiName = s.name;
+                        window.activateDashboardUI(isAdmin, matchedPegawai);
+                    } else {
+                        window.handleLogout();
+                        window.showToast('Sesi tidak valid atau akun telah dihapus.', 'error');
+                    }
+                } catch(e) {
+                    window.handleLogout();
+                }
+            }
+        }
+
+        // FUNGSI INISIALISASI CLOUD SYNC & SUPER CACHE
+        document.addEventListener('DOMContentLoaded', function() {
+            window.initClock();
+            
+            var savedSettings = localStorage.getItem('smpn3_settings');
+            if(savedSettings) {
+                window.globalSettings = Object.assign(window.globalSettings, JSON.parse(savedSettings));
+            }
+
+            var savedPegawai = localStorage.getItem('smpn3_pegawai');
+            if(savedPegawai) window.globalPegawaiData = JSON.parse(savedPegawai);
+
+            var savedJurnal = localStorage.getItem('smpn3_jurnal');
+            if(savedJurnal) window.globalJurnalData = JSON.parse(savedJurnal);
+
+            if (!window.isMockMode) {
+                window.showToast('Mensinkronkan data dengan Cloud Server...', 'success');
+                google.script.run.withSuccessHandler(function(data) {
+                    try {
+                        if(!data) {
+                            throw new Error("Data ditolak oleh server (Periksa format tanggal di Spreadsheet).");
+                        }
+                        
+                        if(data.pegawai && data.pegawai.length > 0) {
+                            window.globalPegawaiData = data.pegawai;
+                            localStorage.setItem('smpn3_pegawai', JSON.stringify(data.pegawai));
+                        }
+                        
+                        if(data.jurnal && data.jurnal.length > 0) {
+                            window.globalJurnalData = data.jurnal;
+                            localStorage.setItem('smpn3_jurnal', JSON.stringify(data.jurnal));
+                        }
+                        
+                        if (data.settings && Object.keys(data.settings).length > 0) {
+                            var serverTime = data.settings.lastUpdated || 0;
+                            var localTime = window.globalSettings.lastUpdated || 0;
+                            
+                            if (serverTime >= localTime) {
+                                window.globalSettings = Object.assign(window.globalSettings, data.settings);
+                                localStorage.setItem('smpn3_settings', JSON.stringify(window.globalSettings));
+                            } else {
+                                if(google.script.run.saveSettingsToDatabase) google.script.run.saveSettingsToDatabase(window.globalSettings);
+                            }
+                        } else if (window.globalSettings.lastUpdated > 0) {
+                            if(google.script.run.saveSettingsToDatabase) google.script.run.saveSettingsToDatabase(window.globalSettings);
+                        }
+                        
+                        window.loadSettingsToUI(); 
+                        window.renderDashboardStats(); 
+                        window.renderPegawaiTable(); 
+                        window.updatePegawaiDropdown(); 
+                        window.renderJurnalTable(); 
+                        
+                        checkSession();
+                        
+                        window.showToast('Sinkronisasi Server Berhasil!', 'success');
+                    } catch(err) {
+                        window.showToast('Gagal memproses data server: ' + err.message, 'error');
+                    }
+                }).withFailureHandler(function(err) {
+                    window.loadSettingsToUI(); 
+                    window.renderDashboardStats(); 
+                    window.renderPegawaiTable(); 
+                    window.updatePegawaiDropdown(); 
+                    window.renderJurnalTable();
+                    checkSession();
+                    window.showToast('Mode Offline: Menggunakan data lokal', 'error');
+                }).getInitialData();
+            } else {
+                if(!savedPegawai) {
+                    window.globalPegawaiData = [{ nip: '20260803001', nama: 'IMAM, S.Pd', jabatan: 'Tendik', jenis: 'Honor Sekolah', email: 'imam@smpn3babelan.sch.id', username: '20260803001', password: 'Pegawai123', ttdBase64: '' }];
+                    localStorage.setItem('smpn3_pegawai', JSON.stringify(window.globalPegawaiData));
+                }
+                window.loadSettingsToUI(); 
+                window.renderDashboardStats(); 
+                window.renderPegawaiTable(); 
+                window.renderJurnalTable(); 
+                checkSession();
+            }
+            
+            document.addEventListener('click', function(event) {
+                var profileArea = document.getElementById('profileArea');
+                var dropdown = document.getElementById('profileDropdown');
+                if (profileArea && dropdown && !profileArea.contains(event.target)) {
+                    dropdown.classList.add('hidden');
+                    var icon = document.getElementById('dropdownIcon');
+                    if(icon) icon.classList.remove('rotate-180');
+                }
+            });
+        });
+
+        // FUNGSI LOGIN
+        window.handleLogin = function(e) { 
+            if(e) e.preventDefault();
+            try {
+                var u = document.getElementById('username').value.trim();
+                var p = document.getElementById('password').value.trim(); 
+                
+                var matchedPegawai = null;
+                var isAdmin = false;
+
+                if (u === 'admin' && p === 'admin123') { 
+                    isAdmin = true;
+                } 
+                
+                if (window.globalPegawaiData && window.globalPegawaiData.length > 0) {
+                    for(var i=0; i<window.globalPegawaiData.length; i++) {
+                        var peg = window.globalPegawaiData[i];
+                        if (peg && (peg.nip === u || peg.username === u) && (peg.password === p || p === 'Pegawai123')) {
+                            matchedPegawai = peg;
+                            if (peg.nip === 'admin' || peg.username === 'admin' || (peg.jabatan && peg.jabatan.toLowerCase() === 'admin')) {
+                                isAdmin = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+                
+                if (matchedPegawai || isAdmin) {
+                    window.currentRole = isAdmin ? 'admin' : 'pegawai';
+                    window.currentUser = matchedPegawai ? matchedPegawai.nip : 'admin';
+                    window.loggedInPegawaiName = matchedPegawai ? matchedPegawai.nama : 'Administrator';
+                    
+                    localStorage.setItem('smpn3_session', JSON.stringify({
+                        user: window.currentUser,
+                        role: window.currentRole,
+                        name: window.loggedInPegawaiName
+                    }));
+
+                    window.showToast('Selamat datang ' + window.loggedInPegawaiName + '!', 'success'); 
+                    window.activateDashboardUI(isAdmin, matchedPegawai);
+                    return false;
+                }
+
+                window.showToast('Username (NIP) atau Password salah!', 'error'); 
+            } catch (err) {
+                alert("Kesalahan Sistem: " + err.message);
+            }
+            return false;
+        };
+
+        window.handleLogout = function() { 
+            localStorage.removeItem('smpn3_session');
+            document.getElementById('dashboardView').classList.add('hidden'); 
+            document.getElementById('loginView').classList.remove('hidden'); 
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('profileDropdown').classList.add('hidden');
+            document.getElementById('dropdownIcon').classList.remove('rotate-180');
+            window.showToast('Berhasil keluar.', 'success'); 
+        };
+
+        window.renderDashboardStats = function() { 
+            var totalJurnal = 0;
+            if (window.globalJurnalData) {
+                if (window.currentRole === 'pegawai') {
+                    for(var i=0; i<window.globalJurnalData.length; i++) {
+                        if(window.globalJurnalData[i] && window.globalJurnalData[i].pegawai === window.loggedInPegawaiName) totalJurnal++;
+                    }
+                } else {
+                    totalJurnal = window.globalJurnalData.length;
+                }
+            }
+            document.getElementById('statTotalJurnal').innerText = totalJurnal; 
+            document.getElementById('statTotalPegawai').innerText = window.globalPegawaiData ? window.globalPegawaiData.length : 0; 
+        };
+
+        window.renderCharts = function() {
+            var dataToRender = [];
+            if(window.globalJurnalData) {
+                for(var i=0; i<window.globalJurnalData.length; i++) {
+                    var item = window.globalJurnalData[i];
+                    if(item) {
+                        if(window.currentRole === 'admin' || item.pegawai === window.loggedInPegawaiName) {
+                            dataToRender.push(item);
+                        }
+                    }
+                }
+            }
+
+            var dateCounts = {};
+            for(var j=0; j<dataToRender.length; j++) {
+                var jrn = dataToRender[j];
+                var tgl = window.formatTanggal(jrn.tanggal || '');
+                if(tgl) {
+                    var actLen = (jrn.activities && jrn.activities.length) ? jrn.activities.length : 0;
+                    dateCounts[tgl] = (dateCounts[tgl] || 0) + actLen;
+                }
+            }
+
+            var labels = Object.keys(dateCounts).sort(function(a,b) {
+                return new Date(a.split('-').reverse().join('-')) - new Date(b.split('-').reverse().join('-'));
+            });
+            var dataPoints = labels.map(function(d) { return dateCounts[d]; });
+
+            var ctx = document.getElementById('activityChart');
+            if (ctx) {
+                if(window.activityChartInstance) { window.activityChartInstance.destroy(); }
+                window.activityChartInstance = new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: labels.length ? labels : ['Belum ada data'],
+                        datasets: [{
+                            label: 'Jumlah Kegiatan',
+                            data: dataPoints.length ? dataPoints : [0],
+                            borderColor: '#059669',
+                            backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#059669'
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }, x: { grid: { display: false } } } }
+                });
+            }
+            window.renderRecentImages(dataToRender);
+        };
+
+        window.renderRecentImages = function(data) {
+            var container = document.getElementById('recentImagesContainer');
+            if(!container) return;
+            var allImages = [];
+            for(var i=0; i<data.length; i++) {
+                var jurnal = data[i];
+                if(jurnal && jurnal.activities) {
+                    for(var k=0; k<jurnal.activities.length; k++) {
+                        var act = jurnal.activities[k];
+                        if (act && act.fotoBase64) { 
+                            allImages.push({ foto: act.fotoBase64, ket: act.keterangan || '' }); 
+                        }
+                    }
+                }
+            }
+            allImages = allImages.reverse().slice(0, 4);
+            if (allImages.length === 0) {
+                container.innerHTML = '<div class="w-full h-full flex flex-col items-center justify-center text-gray-400"><i class="fa-regular fa-image text-4xl mb-3 opacity-50"></i><span class="text-xs font-medium">Belum ada foto yang diupload</span></div>';
+            } else {
+                var imgHtml = '<div class="grid grid-cols-2 gap-2 h-full w-full">';
+                for(var j=0; j<allImages.length; j++) {
+                    imgHtml += '<div class="relative group rounded-lg overflow-hidden shadow-sm border border-gray-200 cursor-pointer"><img src="' + allImages[j].foto + '" onclick="window.openImageLightbox(this.src)" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"><div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end pointer-events-none"><p class="text-[8px] text-white p-2 leading-tight line-clamp-3">' + allImages[j].ket + '</p></div></div>';
+                }
+                imgHtml += '</div>';
+                container.innerHTML = imgHtml;
+            }
+        };
+
+        window.renderPegawaiTable = function() { 
+            var tbody = document.getElementById('pegawaiTableBody');
+            if(!tbody) return;
+            var searchInput = document.getElementById('searchPegawai');
+            var searchQuery = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            var html = '';
+            var data = window.globalPegawaiData || [];
+            
+            for(var i=0; i<data.length; i++) {
+                var p = data[i];
+                if(!p) continue;
+                
+                if(searchQuery) {
+                    var txt = ((p.nama||'') + ' ' + (p.nip||'') + ' ' + (p.jabatan||'')).toLowerCase();
+                    if(txt.indexOf(searchQuery) === -1) continue;
+                }
+
+                html += '<tr class="hover:bg-gray-50">' +
+                    '<td class="p-4 font-mono font-semibold text-xs whitespace-nowrap">' + (p.nip || '-') + '</td>' +
+                    '<td class="p-4 font-bold text-gray-900 whitespace-nowrap">' + (p.nama || '-') + '</td>' +
+                    '<td class="p-4 whitespace-nowrap">' + (p.jabatan || '-') + '</td>' +
+                    '<td class="p-4 whitespace-nowrap"><span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold">' + (p.jenis || '-') + '</span></td>' +
+                    '<td class="p-4 text-xs text-gray-500 whitespace-nowrap">' + (p.email || '-') + '</td>' +
+                    '<td class="p-4 text-xs font-mono whitespace-nowrap"><span class="text-blue-600 font-semibold">User:</span> ' + (p.username || p.nip || '-') + '<br><span class="text-emerald-600 font-semibold">Pass:</span> ' + (p.password || 'Pegawai123') + '</td>' +
+                    '<td class="p-4 text-center whitespace-nowrap">' +
+                        '<div class="flex items-center justify-center gap-2">' +
+                            '<button onclick="window.editPegawai(\'' + p.nip + '\')" class="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg shadow-sm" title="Edit Pegawai"><i class="fa-solid fa-pen"></i></button>' +
+                            '<button onclick="window.resetPasswordPegawai(\'' + p.nip + '\')" class="p-2 bg-yellow-50 text-yellow-600 hover:bg-yellow-100 rounded-lg shadow-sm" title="Reset Password"><i class="fa-solid fa-key"></i></button>' +
+                            '<button onclick="window.hapusPegawai(\'' + p.nip + '\')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="Hapus Pegawai"><i class="fa-solid fa-trash"></i></button>' +
+                        '</div>' +
+                    '</td>' +
+                '</tr>';
+            }
+            tbody.innerHTML = html;
+        };
+
+        window.renderJurnalTable = function() {
+            var tbody = document.getElementById('jurnalTableBody');
+            if(!tbody) return;
+            var searchInput = document.getElementById('searchJurnal');
+            var searchQuery = searchInput ? searchInput.value.toLowerCase() : '';
+            
+            var html = '';
+            var data = window.globalJurnalData || [];
+            
+            for(var i=0; i<data.length; i++) {
+                var item = data[i];
+                if(!item) continue;
+                
+                if (window.currentRole === 'pegawai' && item.pegawai !== window.loggedInPegawaiName) continue;
+
+                if (searchQuery) {
+                    var txt = ((item.tanggal||'') + ' ' + (item.jenisJurnal||'') + ' ' + (item.pegawai||'')).toLowerCase();
+                    var matchAct = false;
+                    if(item.activities) {
+                        for(var a=0; a<item.activities.length; a++) {
+                            if((item.activities[a].keterangan||'').toLowerCase().indexOf(searchQuery) > -1) {
+                                matchAct = true; break;
+                            }
+                        }
+                    }
+                    if(txt.indexOf(searchQuery) === -1 && !matchAct) continue;
+                }
+
+                var nipText = '-';
+                if(window.globalPegawaiData) {
+                    for(var p=0; p<window.globalPegawaiData.length; p++) {
+                        if(window.globalPegawaiData[p] && window.globalPegawaiData[p].nama === item.pegawai) {
+                            nipText = window.globalPegawaiData[p].nip || '-'; break;
+                        }
+                    }
+                }
+
+                var waktuHTML = ''; var ketHTML = ''; var fotoHTML = '';
+                if(item.activities && item.activities.length > 0) {
+                    for(var k=0; k<item.activities.length; k++) {
+                        var act = item.activities[k];
+                        waktuHTML += '<div class="min-h-[50px] py-1.5 flex items-center justify-start"><span class="text-[11px] font-mono whitespace-nowrap bg-gray-100 px-2 py-1 rounded border border-gray-200 inline-block">' + (act.jamMulai || '') + ' - ' + (act.jamSelesai || '') + '</span></div>';
+                        ketHTML += '<div class="min-h-[50px] py-1.5 flex items-center justify-start text-xs text-gray-700"><span class="font-bold mr-1">' + (k+1) + '.</span> <span class="line-clamp-2">' + (act.keterangan || '') + '</span></div>';
+                        fotoHTML += '<div class="min-h-[50px] py-1 flex items-center justify-center">' + (act.fotoBase64 ? '<img src="'+act.fotoBase64+'" onclick="window.openImageLightbox(this.src)" class="w-10 h-10 object-cover rounded shadow-sm border border-gray-200 cursor-pointer hover:scale-110 transition-transform" title="Klik untuk memperbesar">' : '<span class="text-[10px] italic text-gray-400">-</span>') + '</div>';
+                    }
+                }
+
+                var isChecked = window.selectedJurnalIds.indexOf(item.id) > -1 ? 'checked' : '';
+
+                html += '<tr class="hover:bg-gray-50 transition-colors border-b border-gray-100 group">' +
+                    '<td class="p-4 text-center align-middle w-12 whitespace-nowrap"><input type="checkbox" value="'+item.id+'" onchange="window.toggleSelectJurnal(\''+item.id+'\', this)" class="jurnal-checkbox w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 cursor-pointer" '+isChecked+'></td>' +
+                    '<td class="p-4 font-bold text-gray-900 align-middle whitespace-nowrap">' + window.formatTanggal(item.tanggal || '') + '</td>' +
+                    '<td class="p-4 align-middle whitespace-nowrap"><span class="bg-' + (item.jenisJurnal === 'Harian' ? 'emerald' : 'blue') + '-50 text-' + (item.jenisJurnal === 'Harian' ? 'emerald' : 'blue') + '-600 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border border-' + (item.jenisJurnal === 'Harian' ? 'emerald' : 'blue') + '-100">' + (item.jenisJurnal || 'Harian') + '</span></td>' +
+                    '<td class="p-4 align-top py-4 min-w-[150px] whitespace-nowrap">' + waktuHTML + '</td>' +
+                    '<td class="p-4 align-middle whitespace-nowrap"><div class="font-bold text-emerald-700 text-xs">' + (item.pegawai || '-') + '</div><div class="text-[10px] font-mono text-gray-500 mt-0.5">NIP: ' + nipText + '</div></td>' +
+                    '<td class="p-4 align-top py-4 min-w-[250px] w-1/3 whitespace-nowrap">' + ketHTML + '</td>' +
+                    '<td class="p-4 text-center align-top py-4 whitespace-nowrap">' + fotoHTML + '</td>' +
+                    '<td class="p-4 text-center align-middle whitespace-nowrap">' +
+                        '<div class="flex items-center justify-center gap-2">' +
+                            '<button onclick="window.editJurnal(\''+item.id+'\')" class="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg shadow-sm" title="Edit Folder Jurnal"><i class="fa-solid fa-pen"></i></button>' +
+                            '<button onclick="window.printSinglePDF(\''+item.id+'\')" class="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg shadow-sm" title="Lihat / Cetak PDF"><i class="fa-solid fa-file-pdf"></i></button>' +
+                            '<button onclick="window.sharePDF(\''+item.id+'\')" class="p-2 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg shadow-sm" title="Bagikan / Share PDF"><i class="fa-solid fa-share-nodes"></i></button>' +
+                            '<button onclick="window.hapusJurnal(\''+item.id+'\')" class="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="Hapus Permanen"><i class="fa-solid fa-trash"></i></button>' +
+                        '</div>' +
+                    '</td>' +
+                '</tr>';
+            }
+            tbody.innerHTML = html;
+            
+            var allCb = document.getElementById('selectAllCheckbox'); 
+            if(allCb) { 
+                var checkedCount = document.querySelectorAll('.jurnal-checkbox:checked').length;
+                var totalCount = document.querySelectorAll('.jurnal-checkbox').length;
+                allCb.checked = (totalCount > 0 && checkedCount === totalCount); 
+            } 
+            window.updateGabunganButton();
+        };
+
+        window.openJurnalModal = function() { document.getElementById('jurnalModal').classList.remove('hidden'); }; 
+        window.closeJurnalModal = function() { document.getElementById('jurnalModal').classList.add('hidden'); };
+        window.openPegawaiModal = function() { document.getElementById('pegawaiModal').classList.remove('hidden'); }; 
+        window.closePegawaiModal = function() { document.getElementById('pegawaiModal').classList.add('hidden'); };
+        window.openSelectJurnalTypeModal = function() { document.getElementById('selectJurnalTypeModal').classList.remove('hidden'); };
+        window.closeSelectJurnalTypeModal = function() { document.getElementById('selectJurnalTypeModal').classList.add('hidden'); };
+        
+        window.selectJurnalType = function(type) {
+            window.currentJurnalType = type;
+            document.getElementById('jurnalModalTitle').innerText = 'Form Jurnal ' + type;
+            document.getElementById('jurnalEntriesContainer').innerHTML = '';
+            window.closeSelectJurnalTypeModal();
+            window.openJurnalModal();
+            window.addJurnalEntry();
+        };
+
+        window.sortJurnal = function(col) {
+            if (window.currentSortCol === col) { window.currentSortAsc = !window.currentSortAsc; } else { window.currentSortCol = col; window.currentSortAsc = true; }
+            var icons = document.querySelectorAll('th i.fa-solid');
+            for(var i=0; i<icons.length; i++) {
+                if (icons[i].id && icons[i].id.startsWith('sortIcon-')) { icons[i].className = 'fa-solid fa-sort text-gray-300 ml-1'; }
+            }
+            var activeIcon = document.getElementById('sortIcon-' + col);
+            if (activeIcon) { activeIcon.className = 'fa-solid fa-sort-' + (window.currentSortAsc ? 'up' : 'down') + ' text-emerald-600 ml-1'; }
+            
+            if(window.globalJurnalData) {
+                window.globalJurnalData.sort(function(a, b) {
+                    var valA = a[col] || ''; var valB = b[col] || '';
+                    if (col === 'waktu') { 
+                        valA = (a.activities && a.activities[0]) ? (a.activities[0].jamMulai || '') : ''; 
+                        valB = (b.activities && b.activities[0]) ? (b.activities[0].jamMulai || '') : ''; 
+                    }
+                    if (valA < valB) return window.currentSortAsc ? -1 : 1; 
+                    if (valA > valB) return window.currentSortAsc ? 1 : -1; 
+                    return 0;
+                });
+            }
+            window.renderJurnalTable();
+        };
+
+        window.toggleSelectAll = function(checkbox) { 
+            var checkboxes = document.querySelectorAll('.jurnal-checkbox'); 
+            window.selectedJurnalIds = []; 
+            for(var i=0; i<checkboxes.length; i++) {
+                checkboxes[i].checked = checkbox.checked;
+                if(checkbox.checked) window.selectedJurnalIds.push(checkboxes[i].value);
+            }
+            window.updateGabunganButton(); 
+        };
+
+        window.toggleSelectJurnal = function(id, checkbox) { 
+            if (checkbox.checked) { 
+                if (window.selectedJurnalIds.indexOf(id) === -1) window.selectedJurnalIds.push(id); 
+            } else { 
+                var idx = window.selectedJurnalIds.indexOf(id);
+                if(idx > -1) window.selectedJurnalIds.splice(idx, 1);
+            } 
+            var allCb = document.getElementById('selectAllCheckbox'); 
+            var cbs = document.querySelectorAll('.jurnal-checkbox'); 
+            if(allCb) { allCb.checked = (window.selectedJurnalIds.length === cbs.length && cbs.length > 0); } 
+            window.updateGabunganButton(); 
+        };
+
+        window.updateGabunganButton = function() { 
+            var btnPrint = document.getElementById('btnDownloadGabungan'); 
+            var btnDel = document.getElementById('btnDeleteSelected');
+            
+            var len = window.selectedJurnalIds.length;
+            
+            if (len > 0) { 
+                if(btnPrint) { btnPrint.classList.remove('hidden'); btnPrint.classList.add('flex'); }
+                if(btnDel) { btnDel.classList.remove('hidden'); btnDel.classList.add('flex'); }
+                
+                var c1 = document.getElementById('countSelected'); if(c1) c1.innerText = len; 
+                var c2 = document.getElementById('countSelectedDelete'); if(c2) c2.innerText = len; 
+            } else { 
+                if(btnPrint) { btnPrint.classList.add('hidden'); btnPrint.classList.remove('flex'); }
+                if(btnDel) { btnDel.classList.add('hidden'); btnDel.classList.remove('flex'); }
+            } 
+        };
+
+        window.deleteSelectedJurnals = function() {
+            if (window.selectedJurnalIds.length === 0) return;
+            if (confirm("Anda yakin ingin menghapus " + window.selectedJurnalIds.length + " jurnal terpilih secara permanen?")) {
+                var idsToDelete = window.selectedJurnalIds.slice();
+                var newData = [];
+                for (var i = 0; i < window.globalJurnalData.length; i++) {
+                    if (window.globalJurnalData[i] && idsToDelete.indexOf(window.globalJurnalData[i].id) === -1) {
+                        newData.push(window.globalJurnalData[i]);
+                    }
+                }
+                window.globalJurnalData = newData;
+                window.selectedJurnalIds = []; 
+                localStorage.setItem('smpn3_jurnal', JSON.stringify(window.globalJurnalData));
+                
+                var allCb = document.getElementById('selectAllCheckbox');
+                if (allCb) allCb.checked = false;
+
+                window.renderJurnalTable();
+                window.renderDashboardStats();
+                window.updateGabunganButton();
+                window.showToast("Jurnal terpilih berhasil dihapus", "success");
+
+                if(!window.isMockMode) {
+                    google.script.run.withFailureHandler(function(err){ window.showToast('Gagal menghapus di database: ' + err.message, 'error'); }).deleteJurnalData(idsToDelete);
+                }
+            }
+        };
+
+        window.hapusJurnal = function(id) {
+            if (confirm("Anda yakin ingin menghapus jurnal ini secara permanen?")) {
+                var newData = [];
+                for (var i = 0; i < window.globalJurnalData.length; i++) {
+                    if (window.globalJurnalData[i] && window.globalJurnalData[i].id !== id) {
+                        newData.push(window.globalJurnalData[i]);
+                    }
+                }
+                window.globalJurnalData = newData;
+                
+                var sIdx = window.selectedJurnalIds.indexOf(id);
+                if(sIdx > -1) window.selectedJurnalIds.splice(sIdx, 1);
+                
+                localStorage.setItem('smpn3_jurnal', JSON.stringify(window.globalJurnalData));
+                
+                window.renderJurnalTable();
+                window.renderDashboardStats();
+                window.updateGabunganButton();
+                window.showToast("Jurnal berhasil dihapus", "success");
+
+                if(!window.isMockMode) {
+                    google.script.run.withFailureHandler(function(err){ window.showToast('Gagal menghapus di database: ' + err.message, 'error'); }).deleteJurnalData([id]);
+                }
+            }
+        };
+
+        // FUNGSI PRINT / PDF NATIVE A4 (Desktop Preview)
+        window.printSinglePDF = function(id) {
+            var item = window.globalJurnalData.find(function(d) { return d.id === id; });
+            if(!item) return;
+
+            document.getElementById('printableArea').innerHTML = window.generateDocumentHTML(item, true);
+            
+            var cleanName = (item.pegawai || 'Anonim').replace(/[^a-zA-Z0-9]/g, '_');
+            var cleanDate = (item.tanggal || 'Tanggal').replace(/[^a-zA-Z0-9-]/g, '_');
+            var originalTitle = document.title;
+            document.title = 'Jurnal_' + cleanName + '_' + cleanDate;
+            
+            window.print();
+            document.title = originalTitle;
+        };
+
+        // FUNGSI SHARE PDF HTML2PDF (Murni untuk membagikan, tanpa fallback download)
+        window.sharePDF = function(id) {
+            var item = window.globalJurnalData.find(function(d) { return d.id === id; });
+            if(!item) return;
+
+            window.showToast('Menyiapkan file untuk dibagikan...', 'success');
+
+            var cleanName = (item.pegawai || 'Anonim').replace(/[^a-zA-Z0-9]/g, '_');
+            var cleanDate = (item.tanggal || 'Tanggal').replace(/[^a-zA-Z0-9-]/g, '_');
+            var fileName = 'Jurnal_' + cleanName + '_' + cleanDate + '.pdf';
+
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = window.generateDocumentHTML(item, true);
+            tempDiv.style.padding = "15mm"; 
+            tempDiv.style.backgroundColor = "white";
+            tempDiv.style.color = "black";
+            tempDiv.style.width = "210mm"; 
+            tempDiv.style.fontFamily = "Arial, sans-serif";
+
+            var opt = {
+                margin:       0,
+                filename:     fileName,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(tempDiv).output('blob').then(function(blob) {
+                var file = new File([blob], fileName, { type: 'application/pdf' });
+                
+                // Cek ketersediaan fitur Share bawaan HP
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        title: fileName,
+                        text: 'Berikut adalah laporan jurnal pegawai.',
+                        files: [file]
+                    }).then(function() {
+                        window.showToast('Berhasil dibagikan!', 'success');
+                    }).catch(function(error) {
+                        console.log('User membatalkan share atau error:', error);
+                        window.showToast('Batal membagikan file.', 'error');
+                    });
+                } else {
+                    // Peringatan jika fitur share tidak didukung (Misal di PC/Laptop tertentu)
+                    window.showToast('Fitur bagikan hanya tersedia di perangkat seluler (HP). Gunakan tombol PDF untuk melihat/mencetak.', 'error');
+                }
+            });
+        };
+
+        window.printSelectedPDF = function() {
+            if(window.selectedJurnalIds.length === 0) return;
+            var items = window.globalJurnalData.filter(function(d) { return window.selectedJurnalIds.indexOf(d.id) > -1; });
+            
+            var fullHtml = '';
+            var uniquePegawai = [];
+            
+            for(var i=0; i<items.length; i++) {
+                if(uniquePegawai.indexOf(items[i].pegawai || '') === -1) uniquePegawai.push(items[i].pegawai || '');
+                fullHtml += window.generateDocumentHTML(items[i], i === items.length - 1);
+            }
+
+            document.getElementById('printableArea').innerHTML = fullHtml;
+
+            var namaPegawaiDisplay = uniquePegawai.length === 1 ? uniquePegawai[0].replace(/[^a-zA-Z0-9]/g, '_') : "Gabungan";
+            var originalTitle = document.title; 
+            document.title = 'Gabungan_Jurnal_' + namaPegawaiDisplay;
+            
+            window.print(); 
+            document.title = originalTitle;
+        };
+
+        // PEMBARUAN PADA FITUR INPUT (HANYA MUNCUL NAMA SENDIRI BILA PEGAWAI)
+        window.addJurnalEntry = function() {
+            var container = document.getElementById('jurnalEntriesContainer');
+            if(!container) return;
+            var isFirst = container.innerHTML.trim() === '';
+
+            if (isFirst) {
+                var namaFieldHTML = '<div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Pilih Nama Pegawai</label><select required class="j-nama-induk w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-emerald-500 rounded-xl text-sm text-gray-700 j-nama"></select></div>';
+                
+                var topFields = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-200"><div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Tanggal Kegiatan</label><input type="date" required class="j-tanggal-induk w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-emerald-500 rounded-xl text-sm"></div>' + namaFieldHTML + '</div>';
+                container.innerHTML += topFields;
+            }
+
+            var subEntryCount = container.querySelectorAll('.jurnal-sub-entry').length + 1;
+            var newEntry = document.createElement('div');
+            newEntry.className = 'jurnal-sub-entry relative bg-gray-50 border border-emerald-100 p-5 rounded-2xl mb-4 shadow-sm';
+            
+            newEntry.innerHTML = (subEntryCount > 1 ? '<button type="button" onclick="this.closest(\'.jurnal-sub-entry\').remove(); window.updateActivityLabels();" class="absolute top-3 right-3 text-red-500 hover:text-red-700 p-2 bg-white rounded-lg shadow-sm border border-red-100 transition-all"><i class="fa-solid fa-trash"></i></button>' : '') +
+                '<div class="font-bold text-emerald-700 text-xs mb-3 border-b border-emerald-200 pb-2 act-label"><i class="fa-solid fa-clock"></i> Kegiatan ' + subEntryCount + '</div>' +
+                '<div class="space-y-4">' +
+                    '<div class="grid grid-cols-2 gap-4"><div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Dari Jam</label><input type="time" required class="j-jam-mulai w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-emerald-500 rounded-xl text-sm"></div><div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Sampai Jam</label><input type="time" required class="j-jam-selesai w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-emerald-500 rounded-xl text-sm"></div></div>' +
+                    '<div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Keterangan / Uraian Kegiatan</label><textarea rows="2" required class="j-keterangan w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-emerald-500 rounded-xl text-sm" placeholder="Detail kegiatan..."></textarea></div>' +
+                    '<div>' +
+                        '<label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Upload Foto Bukti</label>' +
+                        '<div class="border border-blue-200 bg-blue-50 rounded-xl p-3">' +
+                            '<label class="block text-xs font-bold text-blue-700 uppercase mb-2"><i class="fa-solid fa-image"></i> Pilih Gambar dari Galeri / File</label>' +
+                            '<input type="file" accept="image/*" class="j-foto-galeri w-full text-[10px] text-blue-700 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:bg-blue-600 file:text-white file:font-semibold file:border-0 cursor-pointer">' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            container.appendChild(newEntry);
+            
+            if(isFirst) {
+                window.updatePegawaiDropdown();
+            }
+        };
+
+        window.updateActivityLabels = function() {
+            var container = document.getElementById('jurnalEntriesContainer');
+            if(!container) return;
+            var entries = container.querySelectorAll('.jurnal-sub-entry');
+            for(var i=0; i<entries.length; i++) {
+                var label = entries[i].querySelector('.act-label');
+                if(label) label.innerHTML = '<i class="fa-solid fa-clock"></i> Kegiatan ' + (i+1);
+            }
+        };
+
+        window.addEditJurnalEntry = function() {
+            var container = document.getElementById('editJurnalActivitiesContainer');
+            if(!container) return;
+            var subEntryCount = container.querySelectorAll('.edit-jurnal-entry').length + 1;
+            
+            var newEntry = document.createElement('div');
+            newEntry.className = 'edit-jurnal-entry border border-blue-100 bg-blue-50/30 p-4 rounded-xl relative mt-4';
+            
+            newEntry.innerHTML = '<button type="button" onclick="this.closest(\'.edit-jurnal-entry\').remove(); window.updateEditActivityLabels();" class="absolute top-3 right-3 text-red-500 hover:text-red-700 p-2 bg-white rounded-lg shadow-sm border border-red-100 transition-all"><i class="fa-solid fa-trash"></i></button>' +
+                '<div class="font-bold text-blue-700 text-xs mb-3 border-b border-blue-200 pb-2 act-label">Aktivitas ' + subEntryCount + '</div>' +
+                '<div class="grid grid-cols-2 gap-3 mb-3"><div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Jam Mulai</label><input type="time" class="e-jam-mulai w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs" value="" required></div><div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Jam Selesai</label><input type="time" class="e-jam-selesai w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs" value="" required></div></div>' +
+                '<div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Keterangan</label><textarea class="e-keterangan w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs mb-3" rows="2" required></textarea></div>' +
+                '<div>' +
+                    '<label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Ganti Foto Bukti</label>' +
+                    '<div class="border border-blue-200 bg-blue-50 rounded-xl p-3">' +
+                        '<label class="block text-xs font-bold text-blue-700 uppercase mb-2"><i class="fa-solid fa-image"></i> Pilih Gambar dari Galeri / File</label>' +
+                        '<input type="file" accept="image/*" class="e-foto-galeri w-full text-[10px] text-blue-700 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:bg-blue-600 file:text-white file:font-semibold file:border-0 cursor-pointer">' +
+                    '</div>' +
+                '</div>' +
+                '<input type="hidden" class="e-old-foto" value="">';
+            
+            container.appendChild(newEntry);
+            window.updateEditActivityLabels();
+        };
+
+        window.updateEditActivityLabels = function() {
+            var entries = document.querySelectorAll('.edit-jurnal-entry');
+            for(var i=0; i<entries.length; i++) {
+                var label = entries[i].querySelector('.act-label');
+                if(label) label.innerText = 'Aktivitas ' + (i+1);
+            }
+        };
+
+        window.updatePegawaiDropdown = function() { 
+            var selects = document.querySelectorAll('select.j-nama, select#edit-nama');
+            var optHTML = '<option value="">-- Pilih Nama Pegawai --</option>';
+            
+            if(window.globalPegawaiData) {
+                for(var i=0; i<window.globalPegawaiData.length; i++) {
+                    if(window.globalPegawaiData[i]) {
+                        optHTML += '<option value="' + window.globalPegawaiData[i].nama + '">' + window.globalPegawaiData[i].nama + ' (' + window.globalPegawaiData[i].jabatan + ')</option>';
+                    }
+                }
+            }
+
+            for(var j=0; j<selects.length; j++) {
+                var sel = selects[j];
+                var prevValue = sel.value; 
+                sel.innerHTML = optHTML; 
+                
+                sel.disabled = false;
+                sel.classList.remove('bg-gray-100', 'cursor-not-allowed', 'text-emerald-700', 'font-semibold');
+                sel.classList.add('bg-white', 'text-gray-700');
+                
+                if(prevValue) {
+                    sel.value = prevValue; 
+                } else if (window.currentRole !== 'admin') {
+                    sel.value = window.loggedInPegawaiName;
+                    sel.disabled = true;
+                    sel.classList.add('bg-gray-100', 'cursor-not-allowed', 'text-emerald-700', 'font-semibold');
+                }
+            }
+        };
+
+        window.compressImage = function(file, maxSize) {
+            maxSize = maxSize || 150; 
+            return new Promise(function(resolve, reject) {
+                var reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    var img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function() {
+                        var canvas = document.createElement('canvas');
+                        var width = img.width; var height = img.height;
+                        if (width > height) { 
+                            if (width > maxSize) { height *= maxSize / width; width = maxSize; }
+                        } else { 
+                            if (height > maxSize) { width *= maxSize / height; height = maxSize; } 
+                        }
+                        canvas.width = width; canvas.height = height;
+                        var ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        var format = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+                        resolve(canvas.toDataURL(format, 0.6));
+                    };
+                    img.onerror = function(err) { reject(err); };
+                };
+                reader.onerror = function(error) { reject(error); };
+            });
+        };
+
+        window.handleJurnalSubmit = async function(event) {
+            if(event) event.preventDefault();
+            try {
+                var btn = document.querySelector('#jurnalForm button[type="submit"]'); 
+                var originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+                btn.disabled = true; 
+
+                var container = document.getElementById('jurnalForm');
+                var tanggal = container.querySelector('.j-tanggal-induk').value;
+                var nama = window.currentRole === 'pegawai' ? window.loggedInPegawaiName : container.querySelector('.j-nama-induk').value;
+
+                var currentId = 'JRN-' + Math.floor(Math.random() * 10000);
+                var entries = document.querySelectorAll('.jurnal-sub-entry');
+                var activitiesArray = [];
+
+                for(var i=0; i<entries.length; i++) {
+                    var entry = entries[i];
+                    var jamMulai = entry.querySelector('.j-jam-mulai').value;
+                    var jamSelesai = entry.querySelector('.j-jam-selesai').value;
+                    var keterangan = entry.querySelector('.j-keterangan').value;
+                    
+                    var fotoInputGaleri = entry.querySelector('.j-foto-galeri');
+                    
+                    var fotoBase64 = '';
+                    if(fotoInputGaleri && fotoInputGaleri.files && fotoInputGaleri.files[0]) {
+                        fotoBase64 = await window.compressImage(fotoInputGaleri.files[0], 300);
+                    }
+
+                    activitiesArray.push({ jamMulai: jamMulai, jamSelesai: jamSelesai, keterangan: keterangan, fotoBase64: fotoBase64 });
+                }
+
+                var finalPayload = {
+                    id: currentId,
+                    jenisJurnal: window.currentJurnalType,
+                    tanggal: tanggal,
+                    pegawai: nama,
+                    activities: activitiesArray 
+                };
+
+                if (!window.globalJurnalData) window.globalJurnalData = [];
+                window.globalJurnalData.push(finalPayload);
+                localStorage.setItem('smpn3_jurnal', JSON.stringify(window.globalJurnalData));
+                
+                window.showToast('Jurnal Berhasil Disimpan', 'success');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> BERHASIL';
+                btn.classList.add('bg-teal-500');
+                
+                window.renderJurnalTable(); window.renderDashboardStats();
+                
+                setTimeout(function() { 
+                    btn.innerHTML = originalText; 
+                    btn.classList.remove('bg-teal-500'); 
+                    btn.disabled = false;
+                    document.getElementById('jurnalEntriesContainer').innerHTML = ''; 
+                    window.closeJurnalModal(); 
+                }, 1000);
+
+                if(!window.isMockMode) { 
+                    google.script.run.withFailureHandler(function(err) { window.showToast('Gagal sinkronisasi: ' + err.message, 'error'); }).saveJurnalMultiple([finalPayload]); 
+                }
+            } catch(e) {
+                alert("Gagal memproses jurnal: " + e.message);
+                var btnReset = document.querySelector('#jurnalForm button[type="submit"]');
+                if(btnReset) { btnReset.innerHTML = '<i class="fa-solid fa-check"></i> Simpan Jurnal'; btnReset.disabled = false; }
+            }
+            return false;
+        };
+
+        window.editJurnal = function(id) {
+            var data = null;
+            if(window.globalJurnalData) {
+                for(var i=0; i<window.globalJurnalData.length; i++) {
+                    if(window.globalJurnalData[i] && window.globalJurnalData[i].id === id) { data = window.globalJurnalData[i]; break; }
+                }
+            }
+            if(!data) return;
+            
+            var editNamaContainer = document.getElementById('editNamaContainer');
+            editNamaContainer.innerHTML = '<div><label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">Pilih Nama Pegawai</label><select id="edit-nama" required class="w-full px-4 py-3 bg-white border border-gray-300 focus:ring-2 focus:ring-blue-500 rounded-xl text-sm text-gray-700 j-nama"></select></div>';
+            
+            window.updatePegawaiDropdown();
+
+            document.getElementById('edit-id').value = data.id || '';
+            document.getElementById('edit-jenis').value = data.jenisJurnal || 'Harian';
+            document.getElementById('edit-tanggal').value = data.tanggal || '';
+            
+            var editNamaSel = document.getElementById('edit-nama');
+            if (editNamaSel) {
+                editNamaSel.value = data.pegawai || '';
+                if(window.currentRole !== 'admin') {
+                    editNamaSel.disabled = true;
+                    editNamaSel.classList.add('bg-gray-100', 'cursor-not-allowed', 'text-emerald-700', 'font-semibold');
+                }
+            }
+
+            var container = document.getElementById('editJurnalActivitiesContainer');
+            var actHTML = '';
+            if(data.activities) {
+                for(var k=0; k<data.activities.length; k++) {
+                    var act = data.activities[k];
+                    actHTML += '<div class="edit-jurnal-entry border border-blue-100 bg-blue-50/30 p-4 rounded-xl relative '+(k>0?'mt-4':'')+'">' +
+                        '<button type="button" onclick="this.closest(\'.edit-jurnal-entry\').remove(); window.updateEditActivityLabels();" class="absolute top-3 right-3 text-red-500 hover:text-red-700 p-2 bg-white rounded-lg shadow-sm border border-red-100 transition-all"><i class="fa-solid fa-trash"></i></button>' +
+                        '<div class="font-bold text-blue-700 text-xs mb-3 border-b border-blue-200 pb-2 act-label">Aktivitas '+(k+1)+'</div>' +
+                        '<div class="grid grid-cols-2 gap-3 mb-3"><div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Jam Mulai</label><input type="time" class="e-jam-mulai w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs" value="'+(act.jamMulai || '')+'" required></div><div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Jam Selesai</label><input type="time" class="e-jam-selesai w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs" value="'+(act.jamSelesai || '')+'" required></div></div>' +
+                        '<div><label class="block text-[9px] font-bold text-gray-500 uppercase mb-1">Keterangan</label><textarea class="e-keterangan w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs mb-3" rows="2" required>'+(act.keterangan || '')+'</textarea></div>' +
+                        '<div>' +
+                            '<label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Ganti Foto Bukti</label>' +
+                            '<div class="border border-blue-200 bg-blue-50 rounded-xl p-3">' +
+                                '<label class="block text-xs font-bold text-blue-700 uppercase mb-2"><i class="fa-solid fa-image"></i> Pilih Gambar dari Galeri / File</label>' +
+                                '<input type="file" accept="image/*" class="e-foto-galeri w-full text-[10px] text-blue-700 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:bg-blue-600 file:text-white file:font-semibold file:border-0 cursor-pointer" onchange="var cam = this.closest(\'.grid\').querySelector(\'.e-foto-kamera\'); if(cam) cam.value=\'\';">' +
+                            '</div>' +
+                        '</div>' +
+                        '<input type="hidden" class="e-old-foto" value="'+(act.fotoBase64 || '')+'">' +
+                    '</div>';
+                }
+            }
+            container.innerHTML = actHTML;
+            document.getElementById('editJurnalModal').classList.remove('hidden');
+        };
+
+        window.closeEditJurnalModal = function() { document.getElementById('editJurnalModal').classList.add('hidden'); };
+
+        window.handleEditJurnalSubmit = async function(e) {
+            if(e) e.preventDefault();
+            try {
+                var btn = document.querySelector('#editJurnalForm button[type="submit"]');
+                var originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+                btn.disabled = true;
+
+                var id = document.getElementById('edit-id').value;
+                var idx = -1;
+                if(window.globalJurnalData) {
+                    for(var i=0; i<window.globalJurnalData.length; i++) {
+                        if(window.globalJurnalData[i] && window.globalJurnalData[i].id === id) { idx = i; break; }
+                    }
+                }
+
+                var entries = document.querySelectorAll('.edit-jurnal-entry');
+                if (entries.length === 0) {
+                    window.showToast('Harus ada minimal 1 aktivitas!', 'error');
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return false;
+                }
+
+                var updatedPayload = null;
+                if(idx > -1) {
+                    window.globalJurnalData[idx].jenisJurnal = document.getElementById('edit-jenis').value;
+                    window.globalJurnalData[idx].tanggal = document.getElementById('edit-tanggal').value;
+                    window.globalJurnalData[idx].pegawai = window.currentRole === 'admin' ? document.getElementById('edit-nama').value : window.loggedInPegawaiName;
+                    
+                    var newActivities = [];
+                    for (var j=0; j<entries.length; j++) {
+                        var entry = entries[j];
+                        var jamMulai = entry.querySelector('.e-jam-mulai').value;
+                        var jamSelesai = entry.querySelector('.e-jam-selesai').value;
+                        var keterangan = entry.querySelector('.e-keterangan').value;
+                        
+                        var fotoInputGaleri = entry.querySelector('.e-foto-galeri');
+                        var oldFoto = entry.querySelector('.e-old-foto').value;
+                        
+                        var fotoBase64 = oldFoto;
+                        if (fotoInputGaleri && fotoInputGaleri.files && fotoInputGaleri.files[0]) {
+                            fotoBase64 = await window.compressImage(fotoInputGaleri.files[0], 300); 
+                        }
+                        
+                        newActivities.push({ jamMulai: jamMulai, jamSelesai: jamSelesai, keterangan: keterangan, fotoBase64: fotoBase64 });
+                    }
+                    window.globalJurnalData[idx].activities = newActivities;
+                    updatedPayload = window.globalJurnalData[idx];
+                    localStorage.setItem('smpn3_jurnal', JSON.stringify(window.globalJurnalData));
+                }
+
+                window.renderJurnalTable(); 
+                window.showToast('Jurnal berhasil diperbarui!', 'success');
+                setTimeout(function() { btn.innerHTML = originalText; btn.disabled = false; window.closeEditJurnalModal(); }, 500);
+                
+                if(!window.isMockMode && updatedPayload) { google.script.run.saveJurnalMultiple([updatedPayload]); }
+            } catch(error) {
+                alert("Error Edit Jurnal: " + error.message);
+                var btnReset = document.querySelector('#editJurnalForm button[type="submit"]');
+                if(btnReset) { btnReset.innerHTML = "Simpan Perubahan"; btnReset.disabled = false; }
+            }
+            return false;
+        };
+
+        window.handlePegawaiSubmit = function(event) {
+            if(event) event.preventDefault();
+            try {
+                var nipVal = document.getElementById('pegawaiNip').value.trim();
+                var payload = {
+                    nip: nipVal, 
+                    nama: document.getElementById('pegawaiNama').value,
+                    jabatan: document.getElementById('pegawaiJabatan').value, 
+                    jenis: document.getElementById('pegawaiJenis').value,
+                    email: document.getElementById('pegawaiEmail').value,
+                    username: nipVal,             
+                    password: 'Pegawai123',
+                    ttdBase64: ''
+                };
+                if (!window.globalPegawaiData) window.globalPegawaiData = [];
+                window.globalPegawaiData.push(payload);
+                localStorage.setItem('smpn3_pegawai', JSON.stringify(window.globalPegawaiData));
+
+                window.renderPegawaiTable(); window.updatePegawaiDropdown(); window.renderDashboardStats();
+                window.closePegawaiModal(); document.getElementById('pegawaiForm').reset();
+                window.showToast('Pegawai & Akun Berhasil Dibuat', 'success');
+
+                if(!window.isMockMode) { google.script.run.withFailureHandler(function(err){ window.showToast('Gagal: ' + err.message, 'error'); }).savePegawai(payload); }
+            } catch(e) {
+                alert("Error Pegawai: " + e.message);
+            }
+            return false;
+        };
+
+        window.editPegawai = function(nip) {
+            var data = null;
+            if(window.globalPegawaiData) {
+                for(var i=0; i<window.globalPegawaiData.length; i++) {
+                    if(window.globalPegawaiData[i] && window.globalPegawaiData[i].nip === nip) { data = window.globalPegawaiData[i]; break; }
+                }
+            }
+            if(!data) return;
+            document.getElementById('editPegawaiNip').value = data.nip || '';
+            document.getElementById('editPegawaiNama').value = data.nama || '';
+            document.getElementById('editPegawaiJabatan').value = data.jabatan || '';
+            document.getElementById('editPegawaiJenis').value = data.jenis || 'PNS';
+            document.getElementById('editPegawaiEmail').value = data.email || '';
+            document.getElementById('editPegawaiModal').classList.remove('hidden');
+        };
+
+        window.closeEditPegawaiModal = function() { document.getElementById('editPegawaiModal').classList.add('hidden'); };
+
+        window.handleEditPegawaiSubmit = function(e) {
+            if(e) e.preventDefault();
+            try {
+                var nip = document.getElementById('editPegawaiNip').value;
+                var idx = -1;
+                if(window.globalPegawaiData) {
+                    for(var i=0; i<window.globalPegawaiData.length; i++) {
+                        if(window.globalPegawaiData[i] && window.globalPegawaiData[i].nip === nip) { idx = i; break; }
+                    }
+                }
+                
+                if(idx > -1) {
+                    window.globalPegawaiData[idx].nama = document.getElementById('editPegawaiNama').value;
+                    window.globalPegawaiData[idx].jabatan = document.getElementById('editPegawaiJabatan').value;
+                    window.globalPegawaiData[idx].jenis = document.getElementById('editPegawaiJenis').value;
+                    window.globalPegawaiData[idx].email = document.getElementById('editPegawaiEmail').value;
+                    localStorage.setItem('smpn3_pegawai', JSON.stringify(window.globalPegawaiData));
+                    if(!window.isMockMode) { google.script.run.savePegawai(window.globalPegawaiData[idx]); }
+                }
+                window.renderPegawaiTable(); window.updatePegawaiDropdown(); window.renderDashboardStats(); window.renderJurnalTable();
+                window.closeEditPegawaiModal(); window.showToast('Data Pegawai Diperbarui', 'success');
+            } catch(err) {
+                alert("Error Edit Pegawai: " + err.message);
+            }
+            return false;
+        };
+
+        window.hapusPegawai = function(nip) {
+            if(confirm("Anda yakin ingin menghapus data dan akun pegawai ini?")) {
+                var newData = [];
+                for(var i=0; i<window.globalPegawaiData.length; i++) {
+                    if(window.globalPegawaiData[i] && window.globalPegawaiData[i].nip !== nip) {
+                        newData.push(window.globalPegawaiData[i]);
+                    }
+                }
+                window.globalPegawaiData = newData;
+                localStorage.setItem('smpn3_pegawai', JSON.stringify(window.globalPegawaiData));
+                window.renderPegawaiTable();
+                window.renderDashboardStats();
+            }
+        };
+
+        window.resetPasswordPegawai = function(nip) {
+            if(!confirm('Anda yakin ingin mereset password pegawai ini menjadi "Pegawai123"?')) return;
+            var idx = -1;
+            if(window.globalPegawaiData) {
+                for(var i=0; i<window.globalPegawaiData.length; i++) {
+                    if(window.globalPegawaiData[i] && window.globalPegawaiData[i].nip === nip) { idx = i; break; }
+                }
+            }
+            if(idx > -1) {
+                window.globalPegawaiData[idx].password = 'Pegawai123';
+                localStorage.setItem('smpn3_pegawai', JSON.stringify(window.globalPegawaiData));
+                if(!window.isMockMode) { google.script.run.savePegawai(window.globalPegawaiData[idx]); }
+                window.renderPegawaiTable(); window.showToast('Password berhasil direset ke Pegawai123', 'success');
+            }
+        };
+
+        window.handleSaveSettings = async function(e) {
+            if(e) e.preventDefault();
+            try {
+                var btn = document.querySelector('#adminSettingsPanel button[type="submit"]');
+                var originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+                
+                window.globalSettings.kop1 = document.getElementById('setKop1').value; 
+                window.globalSettings.kop2 = document.getElementById('setKop2').value;
+                window.globalSettings.namaSekolah = document.getElementById('setSekolah').value; 
+                window.globalSettings.alamat = document.getElementById('setAlamat').value;
+                window.globalSettings.namaKepsek = document.getElementById('setKepsek').value; 
+                window.globalSettings.nipKepsek = document.getElementById('setNip').value;
+                window.globalSettings.runningText = document.getElementById('setRunningText').value;
+
+                var logoFile = document.getElementById('setLogoFile');
+                if (logoFile.files && logoFile.files[0]) { 
+                    window.globalSettings.logoBase64 = await window.compressImage(logoFile.files[0], 150); 
+                }
+                var ttdKepsekFile = document.getElementById('setTtdKepsek');
+                if (ttdKepsekFile.files && ttdKepsekFile.files[0]) { 
+                    window.globalSettings.ttdKepsekBase64 = await window.compressImage(ttdKepsekFile.files[0], 200); 
+                }
+
+                window.globalSettings.lastUpdated = Date.now();
+                localStorage.setItem('smpn3_settings', JSON.stringify(window.globalSettings));
+
+                window.loadSettingsToUI();
+                if(!window.isMockMode) { 
+                    if(google.script.run.saveSettingsToDatabase) google.script.run.saveSettingsToDatabase(window.globalSettings); 
+                }
+                window.showToast('BERHASIL DISIMPAN', 'success');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> BERHASIL DISIMPAN';
+                btn.classList.replace('bg-emerald-600', 'bg-teal-500');
+                setTimeout(function() { 
+                    btn.innerHTML = originalText; 
+                    btn.classList.replace('bg-teal-500', 'bg-emerald-600'); 
+                    document.getElementById('setLogoFile').value = ''; 
+                    document.getElementById('setTtdKepsek').value = ''; 
+                }, 3000);
+            } catch (err) {
+                alert("Error Save Settings: " + err.message);
+                var btnReset = document.querySelector('#adminSettingsPanel button[type="submit"]');
+                if(btnReset) { btnReset.innerHTML = "Simpan Pengaturan Sekolah"; }
+            }
+            return false;
+        };
+
+        window.handlePegawaiSettingsSave = async function(e) {
+            if(e) e.preventDefault();
+            try {
+                var btn = document.querySelector('#pegawaiSettingsPanel button[type="submit"]');
+                var originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+
+                var ttdFile = document.getElementById('setTtdPegawai');
+                var newTtdBase64 = null;
+                if (ttdFile.files && ttdFile.files[0]) { 
+                    newTtdBase64 = await window.compressImage(ttdFile.files[0], 200); 
+                }
+
+                var pegIdx = -1;
+                if(window.globalPegawaiData) {
+                    for(var i=0; i<window.globalPegawaiData.length; i++) {
+                        if(window.globalPegawaiData[i] && window.globalPegawaiData[i].nip === window.currentUser) { pegIdx = i; break; }
+                    }
+                }
+
+                if(pegIdx > -1 && newTtdBase64) {
+                    window.globalPegawaiData[pegIdx].ttdBase64 = newTtdBase64;
+                    var preview = document.getElementById('previewTtdPegawai');
+                    if(preview) {
+                        preview.innerHTML = '<img src="' + newTtdBase64 + '" class="max-h-full">';
+                        preview.classList.remove('hidden');
+                    }
+                    localStorage.setItem('smpn3_pegawai', JSON.stringify(window.globalPegawaiData));
+                    if(!window.isMockMode) { google.script.run.savePegawai(window.globalPegawaiData[pegIdx]); } 
+                }
+
+                window.showToast('TTD Berhasil Disimpan', 'success');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> BERHASIL';
+                btn.classList.replace('bg-blue-600', 'bg-teal-500');
+                setTimeout(function() { 
+                    btn.innerHTML = originalText; 
+                    btn.classList.replace('bg-teal-500', 'bg-blue-600'); 
+                    ttdFile.value = ''; 
+                }, 2000);
+            } catch(err) {
+                alert("Error Save TTD: " + err.message);
+                var btnReset = document.querySelector('#pegawaiSettingsPanel button[type="submit"]');
+                if(btnReset) { btnReset.innerHTML = "Simpan TTD"; }
+            }
+            return false;
+        };
+
+        window.handlePasswordChange = function(e) { 
+            if(e) e.preventDefault(); 
+            try {
+                var oldP = document.getElementById('oldPass').value; 
+                var newP = document.getElementById('newPass').value; 
+                var btn = document.querySelector('#keamananPanel button[type="submit"]');
+                var originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+
+                if (window.currentRole === 'pegawai') {
+                    var idx = -1;
+                    if(window.globalPegawaiData) {
+                        for(var i=0; i<window.globalPegawaiData.length; i++) {
+                            if(window.globalPegawaiData[i] && window.globalPegawaiData[i].nip === window.currentUser) { idx = i; break; }
+                        }
+                    }
+                    if(idx > -1) {
+                        if(window.globalPegawaiData[idx].password !== oldP) {
+                            window.showToast('Password lama salah!', 'error');
+                            btn.innerHTML = originalText;
+                            return false;
+                        }
+                        window.globalPegawaiData[idx].password = newP;
+                        localStorage.setItem('smpn3_pegawai', JSON.stringify(window.globalPegawaiData));
+                        if(!window.isMockMode) { google.script.run.savePegawai(window.globalPegawaiData[idx]); }
+                        window.showToast('Password berhasil diubah!', 'success');
+                        document.querySelector('#keamananPanel form').reset();
+                    }
+                } else {
+                    if(window.isMockMode) { 
+                        window.showToast('Password Admin diubah (Mock)', 'success'); document.querySelector('#keamananPanel form').reset(); 
+                    } else { 
+                        google.script.run.withSuccessHandler(function(res) { 
+                            if(res.success) { window.showToast('BERHASIL DISIMPAN', 'success'); document.querySelector('#keamananPanel form').reset(); } 
+                            else { window.showToast(res.message, 'error'); } 
+                        }).changeUserPassword(window.currentUser, oldP, newP); 
+                    } 
+                }
+                setTimeout(function() { btn.innerHTML = originalText; }, 1000);
+            } catch(error) {
+                alert("Kesalahan mengganti password: " + error.message);
+                var btnReset = document.querySelector('#keamananPanel button[type="submit"]');
+                if(btnReset) { btnReset.innerHTML = "Ganti Password"; }
+            }
+            return false;
+        };
+
+        window.downloadExcelTemplate = function() {
+            var templateData = [{ NIP: "2026001", Nama: "Contoh Nama, S.Pd", Jabatan: "Guru", "Jenis Pegawai": "PNS", Email: "contoh@smpn3babelan.sch.id", Username: "contoh", Password: "123" }];
+            var ws = XLSX.utils.json_to_sheet(templateData);
+            ws['!cols'] = [{wch: 15}, {wch: 22}, {wch: 15}, {wch: 15}, {wch: 25}, {wch: 15}, {wch: 15}];
+            var wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Data Pegawai");
+            XLSX.writeFile(wb, "Template_Data_Pegawai.xlsx");
+            window.showToast('Template Excel berhasil diunduh!', 'success');
+        };
+
+        window.handleExcelUpload = function(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var data = new Uint8Array(e.target.result);
+                    var workbook = XLSX.read(data, { type: 'array' });
+                    var json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    if (json.length === 0) { window.showToast('File Excel kosong atau format tidak sesuai!', 'error'); return; }
+                    var countAdded = 0;
+                    for(var i=0; i<json.length; i++) {
+                        var row = json[i];
+                        var nip = String(row.NIP || row.nip || ''); 
+                        var nama = String(row.Nama || row.nama || '');
+                        var jabatan = String(row.Jabatan || row.jabatan || ''); 
+                        var jenis = String(row["Jenis Pegawai"] || row.Jenis || row.jenis || 'Honor Sekolah');
+                        var email = String(row.Email || row.email || '');
+                        
+                        var exist = false;
+                        if(window.globalPegawaiData) {
+                            for(var p=0; p<window.globalPegawaiData.length; p++) {
+                                if(window.globalPegawaiData[p] && window.globalPegawaiData[p].nip === nip) { exist = true; break; }
+                            }
+                        }
+
+                        if (nip && nama && !exist) {
+                            if(!window.globalPegawaiData) window.globalPegawaiData = [];
+                            window.globalPegawaiData.push({ nip: nip, nama: nama, jabatan: jabatan, jenis: jenis, email: email, username: nip, password: 'Pegawai123', ttdBase64: '' }); 
+                            countAdded++;
+                        }
+                    }
+                    localStorage.setItem('smpn3_pegawai', JSON.stringify(window.globalPegawaiData));
+                    window.renderPegawaiTable(); window.updatePegawaiDropdown(); window.renderDashboardStats();
+                    window.showToast('Berhasil mengimpor ' + countAdded + ' data pegawai!', 'success');
+                } catch (err) { window.showToast('Gagal membaca file Excel: ' + err.message, 'error'); }
+                event.target.value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        };
+    </script>
 </body>
 </html>
